@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Download bundled FFmpeg
+      - name: Prepare bundled FFmpeg
         shell: powershell
         run: ./scripts/download-ffmpeg.ps1
 
@@ -37,12 +37,19 @@ jobs:
       - name: Verify unpacked executable exists
         shell: powershell
         run: |
-          $exe = Get-ChildItem -Path dist -Recurse -Filter 'Go宝音乐.exe' | Select-Object -First 1
-          if (-not $exe) { throw 'Unpacked Go宝音乐.exe not found' }
-          Write-Host "Found $($exe.FullName)"
+          $exe = Get-ChildItem -Path 'dist\win-unpacked' -Filter '*.exe' -File | Where-Object { $_.Name -ne 'ffmpeg.exe' -and $_.Name -ne 'ffprobe.exe' } | Select-Object -First 1
+          if (-not $exe) { throw 'Main unpacked application EXE not found' }
+          Write-Host "Found main application EXE: $($exe.FullName)"
 
       - name: Build installer and portable EXE
         run: npm run dist:win
+
+      - name: Verify release EXEs exist
+        shell: powershell
+        run: |
+          $exes = Get-ChildItem -Path dist -Filter '*.exe' -File
+          if ($exes.Count -lt 2) { throw "Expected installer + portable EXE, found $($exes.Count)" }
+          $exes | ForEach-Object { Write-Host "Release EXE: $($_.FullName)" }
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
