@@ -1,0 +1,54 @@
+name: Build GoBao Music Windows V0.2
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Download bundled FFmpeg
+        shell: powershell
+        run: ./scripts/download-ffmpeg.ps1
+
+      - name: Verify JavaScript syntax
+        run: npm run verify:syntax
+
+      - name: Verify automatic audio decode
+        run: npm run verify:audio
+
+      - name: Build unpacked Windows app
+        run: npx electron-builder --win dir
+
+      - name: Verify unpacked executable exists
+        shell: powershell
+        run: |
+          $exe = Get-ChildItem -Path dist -Recurse -Filter 'Go宝音乐.exe' | Select-Object -First 1
+          if (-not $exe) { throw 'Unpacked Go宝音乐.exe not found' }
+          Write-Host "Found $($exe.FullName)"
+
+      - name: Build installer and portable EXE
+        run: npm run dist:win
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: GoBaoMusic-Windows-V0.2
+          path: |
+            dist/*.exe
+            dist/*.blockmap
+          if-no-files-found: error
