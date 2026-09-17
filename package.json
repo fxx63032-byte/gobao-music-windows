@@ -1,0 +1,30 @@
+{
+  "name": "gobao-music-windows",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Go宝音乐 Windows V0.2 desktop player",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis portable",
+    "verify:syntax": "node --check main.js && node --check preload.js && node --check renderer/app.js && node --check renderer/visual.js",
+    "verify:audio": "node scripts/selftest-audio.js",
+    "verify": "npm run verify:syntax && npm run verify:audio"
+  },
+  "devDependencies": {
+    "electron": "39.0.0",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "com.gobao.music",
+    "productName": "Go宝音乐",
+    "directories": { "output": "dist" },
+    "files": ["main.js","preload.js","renderer/**/*","providers/**/*","package.json"],
+    "extraResources": [{"from":"vendor/ffmpeg/bin","to":"bin","filter":["ffmpeg.exe","ffprobe.exe"]}],
+    "win": {
+      "target": [{"target":"nsis","arch":["x64"]},{"target":"portable","arch":["x64"]}],
+      "artifactName": "GoBaoMusic-${version}-${arch}-${target}.${ext}"
+    },
+    "nsis": {"oneClick":false,"allowToChangeInstallationDirectory":true,"createDesktopShortcut":true,"createStartMenuShortcut":true}
+  }
+}
