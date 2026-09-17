@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Go宝音乐</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <section class="visualStage" id="stage">
+    <canvas id="gl"></canvas>
+    <canvas id="spacefx"></canvas>
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span><div><b>GOBAO MUSIC</b><small>WINDOWS V0.2 · ULTRA VISUAL</small></div></div>
+      <div class="badge">LOCAL AUDIO · AUTO DECODE · FFT</div>
+    </div>
+    <div class="playerGlass">
+      <div class="trackRow">
+        <div class="cover"></div>
+        <div class="trackMeta"><h2 id="trackName">寰宇黑洞 · Windows 原生桌面版</h2><p id="trackSub">点击右侧“导入音乐”，后台自动兼容普通音频格式</p></div>
+        <div class="meters"><i><span id="m1"></span></i><i><span id="m2"></span></i><i><span id="m3"></span></i><i><span id="m4"></span></i></div>
+      </div>
+      <input id="seek" class="seek" type="range" min="0" max="1000" value="0">
+      <div class="time"><span id="cur">00:00</span><span id="dur">--:--</span></div>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <h1>Go宝音乐</h1>
+    <p class="desc">V0.2：用户只负责选歌，后台自动解码，播放器、FFT 与视觉引擎共用同一音频源。</p>
+    <div class="actions">
+      <button id="importBtn" class="primary">导入音乐</button><button id="playBtn">播放</button><button id="fullBtn">全屏</button><button id="resetBtn">恢复默认</button>
+    </div>
+    <div class="status" id="status">等待导入音乐。普通 MP3 / WAV / FLAC / M4A / AAC / OGG / OPUS / WMA 等由后台自动处理。</div>
+    <div class="setting"><label>引力透镜强度 <output id="lensOut">72%</output></label><input id="lens" type="range" min="0" max="100" value="72"></div>
+    <div class="setting"><label>吸积盘亮度 <output id="diskOut">78%</output></label><input id="disk" type="range" min="0" max="100" value="78"></div>
+    <div class="setting"><label>星球 / 星云强度 <output id="dustOut">82%</output></label><input id="dust" type="range" min="0" max="100" value="82"></div>
+    <div class="setting"><label>音乐响应 <output id="reactOut">88%</output></label><input id="react" type="range" min="0" max="100" value="88"></div>
+    <div class="setting"><label>界面透明度 <output id="uiOut">82%</output></label><input id="ui" type="range" min="35" max="100" value="82"></div>
+    <div class="fftBox"><div><b id="bassVal">0.00</b><span>BASS</span></div><div><b id="midVal">0.00</b><span>MID</span></div><div><b id="treVal">0.00</b><span>TREBLE</span></div><div><b id="engVal">0.00</b><span>ENERGY</span></div></div>
+    <div class="note">受保护或专有加密下载格式不会尝试破解；正式曲库版本会自动匹配正版在线可播放版本。</div>
+  </aside>
+</div>
+<audio id="audio" preload="metadata"></audio>
+<script src="app.js"></script>
+<script src="visual.js"></script>
+</body>
+</html>
