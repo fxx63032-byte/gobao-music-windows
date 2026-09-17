@@ -22,8 +22,7 @@
     "files": ["main.js","preload.js","renderer/**/*","providers/**/*","package.json"],
     "extraResources": [{"from":"vendor/ffmpeg/bin","to":"bin","filter":["ffmpeg.exe","ffprobe.exe"]}],
     "win": {
-      "target": [{"target":"nsis","arch":["x64"]},{"target":"portable","arch":["x64"]}],
-      "artifactName": "GoBaoMusic-${version}-${arch}-${target}.${ext}"
+      "target": [{"target":"nsis","arch":["x64"]},{"target":"portable","arch":["x64"]}]
     },
     "nsis": {"oneClick":false,"allowToChangeInstallationDirectory":true,"createDesktopShortcut":true,"createStartMenuShortcut":true}
   }
