@@ -34,10 +34,11 @@ class TmeMusicCloudProvider extends MusicProvider {
   status(){
     return {
       name:this.name,
-      configured:Boolean(this.config.baseUrl && this.config.appId && this.config.apiKey),
+      configured:Boolean(this.config.baseUrl && this.config.appId && this.config.apiKey && (this.config.apiKeyHeader || this.config.authScheme)),
       baseUrlConfigured:Boolean(this.config.baseUrl),
       appIdConfigured:Boolean(this.config.appId),
       credentialConfigured:Boolean(this.config.apiKey),
+      authConfigured:Boolean(this.config.apiKeyHeader || this.config.authScheme),
       searchConfigured:Boolean(this.config.searchPath),
       playbackConfigured:Boolean(this.config.playbackPath)
     };
