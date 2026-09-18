@@ -3,7 +3,9 @@ name: Build Mineradio Upstream
 on:
   workflow_dispatch:
   push:
-    branches:\n      - main\n      - replace/mineradio-2.2.0
+    branches:
+      - main
+      - replace/mineradio-2.2.0
     paths:
       - ".gitmodules"
       - "Mineradio"
