@@ -1,13 +1,13 @@
 {
   "name": "gobao-music-windows",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "Go宝音乐 Windows V0.2 desktop player",
+  "description": "Go宝音乐 Windows V0.3 immersive music platform",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dist:win": "electron-builder --win nsis portable --publish never",
-    "verify:syntax": "node --check main.js && node --check preload.js && node --check renderer/app.js && node --check renderer/visual.js",
+    "verify:syntax": "node --check main.js && node --check preload.js && node --check renderer/app.js && node --check renderer/visual.js && node --check renderer/integration.js",
     "verify:audio": "node scripts/selftest-audio.js",
     "verify": "npm run verify:syntax && npm run verify:audio"
   },
@@ -18,12 +18,47 @@
   "build": {
     "appId": "com.gobao.music",
     "productName": "Go宝音乐",
-    "directories": { "output": "dist" },
-    "files": ["main.js","preload.js","renderer/**/*","providers/**/*","package.json"],
-    "extraResources": [{"from":"vendor/ffmpeg/bin","to":"bin","filter":["ffmpeg.exe","ffprobe.exe"]}],
-    "win": {
-      "target": [{"target":"nsis","arch":["x64"]},{"target":"portable","arch":["x64"]}]
+    "directories": {
+      "output": "dist"
     },
-    "nsis": {"oneClick":false,"allowToChangeInstallationDirectory":true,"createDesktopShortcut":true,"createStartMenuShortcut":true}
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "providers/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "vendor/ffmpeg/bin",
+        "to": "bin",
+        "filter": [
+          "ffmpeg.exe",
+          "ffprobe.exe"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }
