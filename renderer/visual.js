@@ -5,7 +5,8 @@
   const fx=fxCanvas.getContext('2d');
   if(!ctx||!fx) return;
 
-  const audio=document.getElementById('audio');
+  const audioA=document.getElementById('audio');
+  const currentAudio=()=>window.GoBaoPlayer?.activeAudio?.()||audioA;
   const meters=['m1','m2','m3','m4'].map(id=>document.getElementById(id));
   const vals=['bassVal','midVal','treVal','engVal'].map(id=>document.getElementById(id));
   let W=0,H=0,dpr=1;
@@ -29,7 +30,8 @@
     const ctl=window.GoBaoControls||{};
     const react=Number(ctl.react?.value||88)/100;
     const A=window.GoBaoAudio;
-    if(A&&A.analyser&&!audio.paused&&audio.readyState>=2){
+    const playing=currentAudio();
+    if(A&&A.analyser&&playing&&!playing.paused&&playing.readyState>=2){
       A.analyser.getByteFrequencyData(A.freq);
       const ny=A.ctx.sampleRate/2, hz=ny/A.freq.length;
       const b1=Math.max(2,Math.floor(180/hz));
