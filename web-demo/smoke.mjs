@@ -3,8 +3,8 @@ import { chromium } from 'playwright';
 const browser = await chromium.launch({headless:true});
 const page = await browser.newPage({viewport:{width:1440,height:900}});
 const errors=[];
-page.on('pageerror',e=>errors.push(String(e)));
-page.on('console',m=>{ if(m.type()==='error') errors.push('console: '+m.text()); });
+page.on('pageerror',e=>{errors.push(String(e)); console.log('PAGEERROR',String(e));});
+page.on('console',m=>{ if(m.type()==='error'){errors.push('console: '+m.text()); console.log('CONSOLEERROR',m.text());} });
 
 await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
 await page.waitForSelector('#page-home.active');
@@ -58,12 +58,16 @@ await page.waitForSelector('#toast.show');
 
 // Local import flow
 await page.click('#nav [data-page="local"]');
-await page.setInputFiles('#audioFile',{
-  name:'smoke-test.wav',
-  mimeType:'audio/wav',
-  buffer:Buffer.from('RIFF0000WAVEfmt data')
+await page.evaluate(()=>{
+  const bytes=new Uint8Array([82,73,70,70,0,0,0,0,87,65,86,69,102,109,116,32,100,97,116,97]);
+  const file=new File([bytes],'smoke-test.wav',{type:'audio/wav'});
+  const dt=new DataTransfer();
+  dt.items.add(file);
+  const input=document.querySelector('#audioFile');
+  input.files=dt.files;
+  input.dispatchEvent(new Event('change',{bubbles:true}));
 });
-await page.waitForFunction(()=>document.querySelectorAll('#localTracks .trackRowItem').length>0);
+await page.waitForFunction(()=>document.querySelectorAll('#localTracks .trackRowItem').length>0,{timeout:5000});
 
 // Settings interaction
 await page.click('#nav [data-page="services"]');
