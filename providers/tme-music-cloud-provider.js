@@ -24,7 +24,10 @@ class TmeMusicCloudProvider extends MusicProvider {
       searchPath:config.searchPath||'',
       trackPath:config.trackPath||'',
       lyricsPath:config.lyricsPath||'',
-      playbackPath:config.playbackPath||''
+      playbackPath:config.playbackPath||'',
+      appIdHeader:config.appIdHeader||'',
+      apiKeyHeader:config.apiKeyHeader||'',
+      authScheme:config.authScheme||''
     };
   }
 
@@ -44,12 +47,11 @@ class TmeMusicCloudProvider extends MusicProvider {
     if(!this.config.baseUrl || !this.config.appId || !this.config.apiKey) throw new Error('TME_PROVIDER_NOT_CONFIGURED');
     if(!route) throw new Error('TME_ENDPOINT_NOT_CONFIGURED');
     const url=this.config.baseUrl.replace(/\/$/,'') + '/' + route.replace(/^\//,'') + queryString(query);
-    const requestHeaders={
-      'Accept':'application/json',
-      'X-GoBao-App-Id':this.config.appId,
-      'Authorization':'Bearer '+this.config.apiKey,
-      ...headers
-    };
+    const requestHeaders={ 'Accept':'application/json', ...headers };
+    if(this.config.appIdHeader) requestHeaders[this.config.appIdHeader]=this.config.appId;
+    if(this.config.apiKeyHeader) requestHeaders[this.config.apiKeyHeader]=this.config.apiKey;
+    else if(this.config.authScheme) requestHeaders.Authorization=this.config.authScheme+' '+this.config.apiKey;
+    else throw new Error('TME_AUTH_MAPPING_NOT_CONFIGURED');
     if(body!==undefined) requestHeaders['Content-Type']='application/json';
     const res=await fetch(url,{method,headers:requestHeaders,body:body===undefined?undefined:JSON.stringify(body)});
     const text=await res.text();
