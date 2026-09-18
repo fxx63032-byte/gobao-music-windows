@@ -382,6 +382,23 @@
     }
   }
 
+  async function testProviderSearch(){
+    const provider=$('#providerSelect')?.value||'tuned';
+    const query=($('#providerSearchInput')?.value||'').trim();
+    const out=$('#providerSearchResults');
+    if(!query){
+      out.textContent='请输入歌名或歌手。';
+      return;
+    }
+    out.textContent='正在请求 '+provider+'…';
+    try{
+      const result=await window.goBaoDesktop.providerSearch(provider,query,{count:10});
+      out.textContent=JSON.stringify(result,null,2).slice(0,12000);
+    }catch(err){
+      out.textContent='请求失败：'+(err?.message||String(err));
+    }
+  }
+
   function runCinematicCamera(){
     const fft=window.GoBaoFFT||{bass:0,mid:0,treble:0,energy:0};
     const pulse=1+Math.min(.016,(fft.bass||0)*.012);
@@ -427,6 +444,8 @@
     $('#automixBtn')?.addEventListener('click',toggleAutoMix);
     $('#aiDjBtn')?.addEventListener('click',aiDJ);
     $('#providerRefreshBtn')?.addEventListener('click',refreshProviders);
+    $('#providerSearchBtn')?.addEventListener('click',testProviderSearch);
+    $('#providerSearchInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')void testProviderSearch();});
     $('#mixSeconds')?.addEventListener('input',e=>state.mixSeconds=Number(e.target.value)||3);
     $('#lyricOffset')?.addEventListener('input',e=>updateLyricOffset(e.target.value));
     $$('.presetBtn').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.preset)));
