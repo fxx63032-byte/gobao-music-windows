@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Go宝音乐 · 在线产品版</title>
+<title>Go宝音乐 · 在线产品版</title>\n<meta name="theme-color" content="#7b3cff">\n<meta name="description" content="Go宝音乐在线产品版：搜索、AI DJ、歌单、排行榜、本地音乐与3D动态播放器">\n<link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -179,7 +179,7 @@
   <div class="dialog"><button class="closeModal" id="closePlaylistModal">×</button><h2>新建歌单</h2><input id="playlistNameInput" placeholder="输入歌单名称"><button id="confirmPlaylist" class="primary">创建</button></div>
 </div>
 
-<div id="toast"></div>
+<nav class="mobileNav" id="mobileNav">\n  <button class="active" data-page="home">⌂<span>首页</span></button>\n  <button data-page="search">⌕<span>搜索</span></button>\n  <button data-page="aidj">✦<span>AI DJ</span></button>\n  <button data-page="playlists">▣<span>歌单</span></button>\n  <button data-page="library">♡<span>我的</span></button>\n</nav>\n\n<div id="toast"></div>
 <audio id="audio" preload="metadata"></audio>
 <script src="services.js"></script>
 <script src="app.js"></script>
