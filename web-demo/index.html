@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Go宝音乐 · 浏览器测试版</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.webtag{margin-top:10px;padding:9px 11px;border:1px solid rgba(255,255,255,.06);border-radius:11px;color:#a99fb6;font-size:10px;line-height:1.5}
+#audio{width:100%;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="visualStage" id="stage">
+    <canvas id="gl"></canvas>
+    <canvas id="spacefx"></canvas>
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span><div><b>GOBAO MUSIC</b><small>WEB PREVIEW · ULTRA VISUAL</small></div></div>
+      <div class="badge">DIRECT URL · FFT · LOCAL AUDIO</div>
+    </div>
+    <div class="playerGlass">
+      <div class="trackRow">
+        <div class="cover"></div>
+        <div class="trackMeta">
+          <h2 id="trackName">寰宇黑洞 · 浏览器在线测试版</h2>
+          <p id="trackSub">当前为模拟节拍；导入本地 MP3/WAV 后自动切换真实 FFT</p>
+        </div>
+        <div class="meters"><i><span id="m1"></span></i><i><span id="m2"></span></i><i><span id="m3"></span></i><i><span id="m4"></span></i></div>
+      </div>
+      <input id="seek" class="seek" type="range" min="0" max="1000" value="0">
+      <div class="time"><span id="cur">00:00</span><span id="dur">--:--</span></div>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <h1>Go宝音乐 · 网页测试</h1>
+    <p class="desc">不用下载安装。直接打开网址看黑洞、动态星球和节拍效果。普通本地音乐可直接导入测试。</p>
+    <div class="actions">
+      <button id="importBtn" class="primary">导入本地音乐</button>
+      <button id="playBtn">播放</button>
+      <button id="fullBtn">全屏</button>
+      <button id="resetBtn">恢复默认</button>
+    </div>
+    <input id="audioFile" type="file" accept="audio/*" hidden>
+    <audio id="audio" controls preload="metadata"></audio>
+    <div class="status" id="status">网页已启动。当前使用模拟节拍自动展示；也可以导入普通 MP3 / WAV 测试真实音乐节奏。</div>
+
+    <div class="setting"><label>引力透镜强度 <output id="lensOut">72%</output></label><input id="lens" type="range" min="0" max="100" value="72"></div>
+    <div class="setting"><label>吸积盘亮度 <output id="diskOut">78%</output></label><input id="disk" type="range" min="0" max="100" value="78"></div>
+    <div class="setting"><label>星球 / 星云强度 <output id="dustOut">82%</output></label><input id="dust" type="range" min="0" max="100" value="82"></div>
+    <div class="setting"><label>音乐响应 <output id="reactOut">88%</output></label><input id="react" type="range" min="0" max="100" value="88"></div>
+    <div class="setting"><label>界面透明度 <output id="uiOut">82%</output></label><input id="ui" type="range" min="35" max="100" value="82"></div>
+
+    <div class="fftBox">
+      <div><b id="bassVal">0.00</b><span>BASS</span></div>
+      <div><b id="midVal">0.00</b><span>MID</span></div>
+      <div><b id="treVal">0.00</b><span>TREBLE</span></div>
+      <div><b id="engVal">0.00</b><span>ENERGY</span></div>
+    </div>
+    <div class="webtag">网页测试版适合快速看视觉效果。正式 Windows 版仍负责 FFmpeg 自动兼容更多音频格式；网页端优先测试 MP3 / WAV。</div>
+  </aside>
+</div>
+<script src="app.js"></script>
+<script src="visual.js"></script>
+</body>
+</html>
