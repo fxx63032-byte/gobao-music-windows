@@ -1,43 +1,59 @@
-# Go宝音乐 Windows V0.2
+# Go宝音乐 Windows V0.3
 
-Windows 桌面播放器工程。V0.2 的重点是把“音乐格式兼容”从用户手里拿走：用户只负责点击 **导入音乐**，后台使用随安装包内置的 FFmpeg 自动准备为 48kHz / 双声道 / PCM16 WAV，再由同一个播放器音频源驱动 FFT 和 3D 视觉。
+Go宝音乐 V0.3 已从“单一 3D 黑洞播放器”升级为完整沉浸式音乐平台骨架。
 
-## V0.2 已修复
+## 已融合能力
 
-- 修复 V0.1 `preparedTracks.set()` 写在 `return` 之后、导致 `gobao-audio://` 播放地址找不到的问题。
-- 普通 MP3 / WAV / FLAC / M4A / AAC / OGG / OPUS / WMA 等交给 FFmpeg 自动解码。
-- 用户界面不再要求用户判断格式或处理浏览器播放限制。
-- 受保护/专有平台下载格式不会尝试破解；以后接正版曲库 API 后自动匹配可播放版本。
-- 黑洞主体 Shader 保持当前确认的紫色颜色、形状和比例；外围星球继续响应 Bass / Energy。
+- 紫色黑洞 / 星体 / FFT 实时音乐视觉
+- 本地音乐单曲导入 + FFmpeg 自动兼容
+- 本地音乐文件夹扫描
+- LRC 动态歌词舞台
+- 3D 歌单架
+- 播放队列
+- AutoMix 自动续播与安全淡入淡出
+- AI DJ 本地音乐队列生成
+- Bass / Mid / Treble / Energy 电影镜头驱动
+- 多套视觉预设
+- Wallpaper / 视觉素材库 project.json 扫描
+- Windows 桌面沉浸预览模式，F8 退出
+- MusicProvider 统一架构
+- Local Music Provider
+- TME Music Cloud 官方 Provider 适配器占位
+- Tuned Global 官方 Provider 适配器占位
+
+## 商业曲库原则
+
+Go宝正式版不把 QQ音乐、网易云、汽水音乐等非官方逆向接口、Cookie 或音频解密方案作为商业曲库来源。
+
+正式在线曲库走：
+- TME Music Cloud 正版授权
+- Tuned Global 正版授权
+- 其他获得明确商用播放权的 Provider
+
+曲库 Key / Secret 只放服务器端，不进入 Web、Windows、Android 或 iOS 客户端。
 
 ## Windows 构建
 
-双击：
+GitHub Actions 会自动执行：
 
-- `VERIFY-WINDOWS.bat`：先验证 FFmpeg + 自动解码。
-- `BUILD-WINDOWS.bat`：生成 NSIS 安装版和 Portable EXE。
-
-或者推送到 GitHub 后，运行 `.github/workflows/build-windows.yml`，Windows Runner 会自动：下载 FFmpeg → 语法检查 → 音频自检 → 构建 EXE → 上传 Artifact。
-
-## 用户最终体验
-
-```text
-打开 Go宝音乐
-→ 导入音乐
-→ 后台自动解码
-→ 播放
-→ Bass / Mid / Treble / Energy
-→ 黑洞 + 星球实时同步
+```
+JavaScript syntax
+→ FFmpeg 音频自检
+→ Provider 模块检查
+→ Windows unpacked build
+→ NSIS Installer + Portable EXE
 ```
 
-用户不需要知道 MP3、WAV、AAC 等编码细节。
+最终下载 Artifact：
 
-## 当前验证状态
+`GoBaoMusic-Windows-V0.3`
 
-已在当前 Linux 构建环境实际通过：
+## 验证状态
 
-- JavaScript 语法检查。
-- 测试 MP3 → FFmpeg → 48kHz 双声道 PCM16 WAV 转码。
-- 输出 RIFF/WAVE 文件头和音频数据检查。
+V0.3 融合分支已经通过：
+- Fast Verify
+- Windows FFmpeg 音频自检
+- Provider 模块加载
+- electron-builder Windows unpacked 构建
 
-Windows `.exe` 的最终启动/安装验证必须在 Windows Runner 或 Windows 实机完成，工程已提供自动构建工作流。
+详细融合范围见：`docs/full-integration-v0.3.md`
