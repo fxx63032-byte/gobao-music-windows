@@ -1,0 +1,36 @@
+name: Verify GoBao Music V0.3 Integration
+
+on:
+  push:
+    branches:
+      - feature/full-music-experience-integration
+  workflow_dispatch:
+
+jobs:
+  verify-windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Prepare FFmpeg
+        shell: powershell
+        run: ./scripts/download-ffmpeg.ps1
+      - name: Syntax and audio verification
+        run: npm run verify
+      - name: Verify provider modules
+        shell: powershell
+        run: |
+          node -e "require('./providers/provider-contract'); require('./providers/local-provider'); require('./providers/tme-music-cloud-provider'); require('./providers/tuned-global-provider'); console.log('PROVIDERS_OK')"
+      - name: Package unpacked Windows app
+        run: npx electron-builder --win dir --publish never
+      - name: Verify main executable
+        shell: powershell
+        run: |
+          $exe = Get-ChildItem -Path 'dist\win-unpacked' -Filter '*.exe' -File | Where-Object { $_.Name -ne 'ffmpeg.exe' -and $_.Name -ne 'ffprobe.exe' } | Select-Object -First 1
+          if (-not $exe) { throw 'GoBao main EXE not found' }
+          Write-Host "INTEGRATION_BUILD_OK: $($exe.FullName)"
