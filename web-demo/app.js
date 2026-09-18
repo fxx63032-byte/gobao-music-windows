@@ -174,7 +174,7 @@
   function importLocal(files){
     [...files].forEach((f,i)=>{
       const url=URL.createObjectURL(f);
-      state.local.unshift({id:'local-'+Date.now()+'-'+i,title:f.name.replace(/\.[^/.]+$/,''),artist:'本地文件',album:'Local Music',mood:['LOCAL'],duration:0,cover:'linear-gradient(135deg,#30517d,#9754ba)',local:true,url,file});
+      state.local.unshift({id:'local-'+Date.now()+'-'+i,title:f.name.replace(/\.[^/.]+$/,''),artist:'本地文件',album:'Local Music',mood:['LOCAL'],duration:0,cover:'linear-gradient(135deg,#30517d,#9754ba)',local:true,url,file:f});
     });
     renderLocal();toast('已导入 '+files.length+' 首本地音乐');
   }
