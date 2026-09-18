@@ -92,6 +92,6 @@
     sphere(W*.76,H*.82,Math.min(W,H)*.027,colors[4],p[0],'purple',t);
   }
 
-  function frame(now){resize();const t=(now-start)/1000,p=audioParams(t);background(t,p);blackHole(t,p);environment(t,p);p.forEach((v,i)=>{meters[i].style.height=(12+v*88)+'%';vals[i].textContent=v.toFixed(2);});requestAnimationFrame(frame);}
+  function frame(now){resize();const t=(now-start)/1000,p=audioParams(t);window.GoBaoFFT={bass:p[0],mid:p[1],treble:p[2],energy:p[3],time:t};background(t,p);blackHole(t,p);environment(t,p);p.forEach((v,i)=>{meters[i].style.height=(12+v*88)+'%';vals[i].textContent=v.toFixed(2);});requestAnimationFrame(frame);}
   requestAnimationFrame(frame);
 })();
