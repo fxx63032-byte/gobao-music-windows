@@ -1,30 +1,162 @@
 (() => {
-  const glCanvas=document.getElementById('gl');
+  const canvas=document.getElementById('gl');
   const fxCanvas=document.getElementById('spacefx');
-  const ctx=glCanvas.getContext('2d');
-  const fx=fxCanvas.getContext('2d');
-  if(!ctx||!fx) return;
+  if(!canvas) return;
+  const gl=canvas.getContext('webgl2',{antialias:false,alpha:false,powerPreference:'high-performance'});
+  const fx=fxCanvas?.getContext('2d',{alpha:true});
+  if(!gl) return;
 
   const audio=document.getElementById('audio');
   const meters=['m1','m2','m3','m4'].map(id=>document.getElementById(id));
   const vals=['bassVal','midVal','treVal','engVal'].map(id=>document.getElementById(id));
-  let W=0,H=0,dpr=1;
-  let bass=.18,mid=.2,tre=.16,eng=.2;
+  let bass=.18,mid=.20,tre=.16,eng=.20;
   const start=performance.now();
 
-  const colors=[[110,194,255],[255,190,118],[255,96,69],[160,236,255],[198,145,255]];
-  const stars=Array.from({length:230},(_,i)=>({x:Math.random(),y:Math.random(),s:.3+Math.random()*1.4,p:Math.random()*Math.PI*2,h:[205,235,275,315,35][i%5]}));
+  const vs=`#version 300 es
+  in vec2 a_pos;
+  void main(){ gl_Position=vec4(a_pos,0.0,1.0); }`;
 
-  function resize(){
-    const r=glCanvas.getBoundingClientRect();
-    dpr=Math.min(devicePixelRatio||1,1.6);
-    const w=Math.max(2,Math.floor(r.width*dpr));
-    const h=Math.max(2,Math.floor(r.height*dpr));
-    if(w!==W||h!==H){W=w;H=h;glCanvas.width=fxCanvas.width=w;glCanvas.height=fxCanvas.height=h;}
+  const fs=`#version 300 es
+  precision highp float;
+  out vec4 outColor;
+  uniform vec2 u_res;
+  uniform float u_time;
+  uniform float u_bass,u_mid,u_treble,u_energy;
+  uniform float u_lens,u_disk,u_dust;
+
+  float hash21(vec2 p){
+    p=fract(p*vec2(123.34,345.45));
+    p+=dot(p,p+34.345);
+    return fract(p.x*p.y);
   }
-  addEventListener('resize',resize);
+  mat2 rot(float a){
+    float c=cos(a),s=sin(a);
+    return mat2(c,-s,s,c);
+  }
+  vec3 palette(float t){
+    vec3 a=vec3(.12,.04,.20);
+    vec3 b=vec3(.55,.22,.85);
+    vec3 c=vec3(1.0,.55,.35);
+    return mix(a,b,smoothstep(.0,.65,t))+c*pow(max(t-.72,0.0),2.0)*2.0;
+  }
+  float stars(vec2 uv,float density,float seed){
+    vec2 gv=fract(uv*density)-.5;
+    vec2 id=floor(uv*density);
+    float n=hash21(id+seed);
+    vec2 p=gv-vec2(hash21(id+3.1)-.5,hash21(id+8.7)-.5)*.65;
+    float d=length(p);
+    float tw=.35+.65*sin(u_time*(1.0+n*3.0)+n*12.0)*.5+.35;
+    return smoothstep(.055,.0,d)*step(.77,n)*tw;
+  }
+  void main(){
+    vec2 frag=gl_FragCoord.xy;
+    vec2 uv=(frag-.5*u_res)/u_res.y;
+    float t=u_time;
+    float beat=u_bass;
+    float r=length(uv);
 
-  function avg(arr,a,b){let s=0,n=0;for(let i=a;i<Math.min(b,arr.length);i++){s+=arr[i];n++;}return n?s/(n*255):0;}
+    uv*=rot(.018*sin(t*.18)+u_mid*.02);
+
+    float core=.105+.018*beat;
+    float bend=(.028+.06*u_lens)/(r*r+.055);
+    vec2 luv=uv*(1.0+bend*exp(-r*2.2));
+    float lr=length(luv);
+    float la=atan(luv.y,luv.x);
+
+    vec3 col=vec3(.006,.004,.014);
+
+    float neb=.5+.5*sin(luv.x*3.2-luv.y*2.0+t*.07);
+    neb*=.5+.5*sin(luv.y*4.5+t*.05+sin(luv.x*2.0));
+    col+=vec3(.07,.015,.11)*neb*(1.0-smoothstep(.2,1.2,lr));
+
+    float s=0.0;
+    s+=stars(luv+vec2(t*.002,0.0),15.0+12.0*u_dust,1.0);
+    s+=stars(luv*rot(.15)+vec2(0.0,-t*.001),27.0+18.0*u_dust,9.0)*.65;
+    s+=stars(luv*1.8,44.0+24.0*u_dust,17.0)*.35;
+    col+=vec3(.55,.42,.85)*s*(.65+u_treble*.9);
+
+    vec2 dUv=luv;
+    dUv.y*=2.65;
+    dUv*=rot(.10*sin(t*.13));
+    float dr=length(dUv);
+    float da=atan(dUv.y,dUv.x);
+
+    float inner=.22+.015*sin(t*.4);
+    float outer=.49+.02*u_energy;
+    float ring=smoothstep(inner-.018,inner+.02,dr)*(1.0-smoothstep(outer-.03,outer+.03,dr));
+    float bands=.35+.65*(.5+.5*sin(dr*88.0-da*7.0-t*(2.3+beat*2.0)));
+    bands*=.55+.45*(.5+.5*sin(dr*38.0+da*3.0+t*.7));
+    float hot=pow(max(0.0,1.0-abs(dr-.30)/.22),2.3);
+    float asym=.42+.58*pow(.5+.5*cos(da-.45),2.0);
+
+    vec3 diskCol=palette(clamp(hot+.18*bands,0.0,1.0));
+    diskCol*=ring*(.65+.95*bands)*(.55+.9*asym)*(1.0+u_disk*1.55);
+    diskCol*=1.0+beat*1.5;
+    col+=diskCol;
+
+    float arc=exp(-pow(abs(lr-.19)/.016,2.0));
+    float arcMask=smoothstep(.92,.1,abs(sin(la)));
+    col+=vec3(.48,.18,.82)*arc*arcMask*(.5+u_disk);
+
+    float ph=exp(-pow((lr-(core+.035))/(.006+.003*u_energy),2.0));
+    col+=vec3(1.0,.72,.95)*ph*(1.25+u_treble*1.4);
+
+    float horizon=1.0-smoothstep(core-.006,core+.009,lr);
+    col*=1.0-horizon*.98;
+
+    float corona=exp(-pow((lr-core)/(.035+.01*beat),2.0));
+    col+=vec3(.46,.10,.75)*corona*(.20+.52*u_energy);
+
+    float pulse=exp(-pow((lr-(.55+fract(t*.28)*.65))/(.015+.015*u_energy),2.0));
+    col+=vec3(.25,.06,.48)*pulse*u_energy*.28;
+
+    float vig=smoothstep(1.18,.22,length((frag-.5*u_res)/u_res.y));
+    col*=.45+.55*vig;
+    col=1.0-exp(-col*1.45);
+    col=pow(col,vec3(.88));
+    outColor=vec4(col,1.0);
+  }`;
+
+  function makeShader(type,src){
+    const s=gl.createShader(type);
+    gl.shaderSource(s,src);
+    gl.compileShader(s);
+    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+
+  let program;
+  try{
+    program=gl.createProgram();
+    gl.attachShader(program,makeShader(gl.VERTEX_SHADER,vs));
+    gl.attachShader(program,makeShader(gl.FRAGMENT_SHADER,fs));
+    gl.linkProgram(program);
+    if(!gl.getProgramParameter(program,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+  }catch(err){
+    console.error('GoBao WebGL shader error',err);
+    return;
+  }
+
+  gl.useProgram(program);
+  const vao=gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const aPos=gl.getAttribLocation(program,'a_pos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos,2,gl.FLOAT,false,0,0);
+
+  const U={};
+  ['u_res','u_time','u_bass','u_mid','u_treble','u_energy','u_lens','u_disk','u_dust']
+    .forEach(n=>U[n]=gl.getUniformLocation(program,n));
+
+  function avg(arr,a,b){
+    let s=0,n=0;
+    for(let i=a;i<Math.min(b,arr.length);i++){s+=arr[i];n++;}
+    return n?s/(n*255):0;
+  }
+
   function audioParams(t){
     const ctl=window.GoBaoControls||{};
     const react=Number(ctl.react?.value||88)/100;
@@ -35,63 +167,64 @@
       const b1=Math.max(2,Math.floor(180/hz));
       const m2=Math.max(b1+2,Math.floor(2200/hz));
       const t2=Math.max(m2+2,Math.floor(11000/hz));
-      const nb=avg(A.freq,0,b1),nm=avg(A.freq,b1,m2),nt=avg(A.freq,m2,t2);
-      bass=bass*.70+nb*.30; mid=mid*.78+nm*.22; tre=tre*.82+nt*.18; eng=eng*.76+(nb*.45+nm*.35+nt*.20)*.24;
+      const nb=avg(A.freq,0,b1), nm=avg(A.freq,b1,m2), nt=avg(A.freq,m2,t2);
+      bass=bass*.70+nb*.30;
+      mid=mid*.78+nm*.22;
+      tre=tre*.82+nt*.18;
+      eng=eng*.76+(nb*.45+nm*.35+nt*.20)*.24;
     }else{
       const kick=Math.pow(Math.max(0,Math.sin(t*3.1)),7);
-      bass=.17+.57*kick; mid=.2+.17*(.5+.5*Math.sin(t*1.25)); tre=.15+.16*(.5+.5*Math.sin(t*4.4+1.1)); eng=.2+.34*kick+.1*(.5+.5*Math.sin(t*.75));
+      bass=.17+.57*kick;
+      mid=.20+.17*(.5+.5*Math.sin(t*1.25));
+      tre=.15+.16*(.5+.5*Math.sin(t*4.4+1.1));
+      eng=.20+.34*kick+.10*(.5+.5*Math.sin(t*.75));
     }
-    return [Math.min(1,bass*react),Math.min(1,mid*react),Math.min(1,tre*react),Math.min(1,eng*react)];
+    return [
+      Math.min(1,bass*react),
+      Math.min(1,mid*react),
+      Math.min(1,tre*react),
+      Math.min(1,eng*react)
+    ];
   }
 
-  function background(t,p){
-    const g=ctx.createRadialGradient(W*.5,H*.48,0,W*.5,H*.5,Math.max(W,H)*.85);
-    g.addColorStop(0,'rgb(25,10,45)');g.addColorStop(.5,'rgb(8,5,16)');g.addColorStop(1,'rgb(2,2,5)');
-    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-    ctx.save();ctx.globalCompositeOperation='screen';
-    for(const s of stars){const tw=.25+.75*Math.abs(Math.sin(t*.8+s.p));ctx.fillStyle=`hsla(${s.h},85%,82%,${.08+.28*tw})`;ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.s*dpr*(.8+p[2]*.5),0,Math.PI*2);ctx.fill();}
-    ctx.restore();
-  }
-
-  function blackHole(t,p){
-    const cx=W*.5,cy=H*.47,scale=Math.min(W,H),core=scale*(.07+p[0]*.012),ring=scale*(.22+p[3]*.018);
-    ctx.save();ctx.translate(cx,cy);ctx.globalCompositeOperation='screen';
-    const aura=ctx.createRadialGradient(0,0,core*.5,0,0,ring*2.1);aura.addColorStop(0,'rgba(150,78,230,.18)');aura.addColorStop(.35,'rgba(115,45,190,.12)');aura.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=aura;ctx.beginPath();ctx.arc(0,0,ring*2.1,0,Math.PI*2);ctx.fill();
-    for(let i=0;i<62;i++){
-      const rr=ring*(.62+(i%9)*.035), a=(i/62)*Math.PI*2+t*(.22+p[0]*.6), len=.12+p[0]*.04;
-      const hue=274+i*1.15;
-      ctx.strokeStyle=`hsla(${hue},95%,${62+(i%5)*4}%,${.07+i/62*.16})`;
-      ctx.lineWidth=(2+(i%4))*dpr;
-      ctx.shadowColor=`hsla(${hue},95%,72%,.24)`;ctx.shadowBlur=(8+p[0]*18)*dpr;
-      ctx.beginPath();ctx.ellipse(0,0,rr,rr*.31,0,a,a+len);ctx.stroke();
+  function resize(){
+    const rect=canvas.getBoundingClientRect();
+    const dpr=Math.min(devicePixelRatio||1,1.75);
+    const w=Math.max(2,Math.floor(rect.width*dpr));
+    const h=Math.max(2,Math.floor(rect.height*dpr));
+    if(canvas.width!==w||canvas.height!==h){
+      canvas.width=w;canvas.height=h;
+      if(fxCanvas){fxCanvas.width=w;fxCanvas.height=h;}
+      gl.viewport(0,0,w,h);
     }
-    ctx.shadowBlur=0;
-    ctx.strokeStyle=`rgba(255,220,250,${.62+p[2]*.2})`;ctx.lineWidth=(2.2+p[2]*2.2)*dpr;ctx.beginPath();ctx.ellipse(0,0,ring*.82,ring*.25,0,0,Math.PI*2);ctx.stroke();
-    ctx.globalCompositeOperation='source-over';ctx.fillStyle='#010104';ctx.beginPath();ctx.arc(0,0,core*(1+p[0]*.08),0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle='rgba(243,218,255,.85)';ctx.lineWidth=2*dpr;ctx.shadowColor='rgba(207,139,255,.9)';ctx.shadowBlur=16*dpr;ctx.beginPath();ctx.arc(0,0,core*1.2,0,Math.PI*2);ctx.stroke();ctx.restore();
+    if(fx) fx.clearRect(0,0,w,h);
   }
+  addEventListener('resize',resize);
 
-  function sphere(x,y,r,c,pulse,kind,t){
-    fx.save();fx.globalCompositeOperation='screen';
-    const g=fx.createRadialGradient(x-r*.35,y-r*.4,r*.05,x,y,r*1.05);g.addColorStop(0,`rgba(${c[0]},${c[1]},${c[2]},.98)`);g.addColorStop(.55,`rgba(${c[0]*.65|0},${c[1]*.65|0},${c[2]*.65|0},.9)`);g.addColorStop(1,'rgba(4,4,12,.98)');fx.fillStyle=g;fx.beginPath();fx.arc(x,y,r*(1+pulse*.045),0,Math.PI*2);fx.fill();
-    const a=fx.createRadialGradient(x,y,r*.62,x,y,r*(1.55+pulse*.08));a.addColorStop(0,'rgba(0,0,0,0)');a.addColorStop(.78,`rgba(${c[0]},${c[1]},${c[2]},${.09+.14*pulse})`);a.addColorStop(1,'rgba(0,0,0,0)');fx.fillStyle=a;fx.beginPath();fx.arc(x,y,r*(1.55+pulse*.08),0,Math.PI*2);fx.fill();
-    if(kind==='gas'){fx.save();fx.beginPath();fx.arc(x,y,r*.96,0,Math.PI*2);fx.clip();for(let i=-4;i<=4;i++){fx.fillStyle=`rgba(160,220,255,${.045+.07*pulse})`;fx.beginPath();fx.ellipse(x,y+i*r*.17+Math.sin(t+i)*r*.02,r*1.05,r*.04,0,0,Math.PI*2);fx.fill();}fx.restore();}
-    if(kind==='lava'){fx.save();fx.beginPath();fx.arc(x,y,r*.96,0,Math.PI*2);fx.clip();for(let i=0;i<7;i++){fx.strokeStyle=`rgba(255,80,38,${.12+.13*pulse})`;fx.lineWidth=1.5*dpr;fx.beginPath();for(let j=0;j<12;j++){const px=x-r*.7+j*r*.13,py=y+(i-3)*r*.13+Math.sin(j*.9+i+t*.4)*r*.12;j?fx.lineTo(px,py):fx.moveTo(px,py);}fx.stroke();}fx.restore();}
-    for(let i=0;i<3;i++){fx.strokeStyle=`rgba(${c[0]},${c[1]},${c[2]},${.07+.06*i+.08*pulse})`;fx.lineWidth=(1.2+i*.55)*dpr;fx.beginPath();fx.ellipse(x,y,r*(1.35+i*.18),r*(.28+i*.05),-.18+i*.04,0,Math.PI*2);fx.stroke();}
-    fx.restore();
+  function frame(now){
+    resize();
+    const t=(now-start)/1000;
+    const p=audioParams(t);
+    const ctl=window.GoBaoControls||{};
+
+    gl.useProgram(program);
+    gl.uniform2f(U.u_res,canvas.width,canvas.height);
+    gl.uniform1f(U.u_time,t);
+    gl.uniform1f(U.u_bass,p[0]);
+    gl.uniform1f(U.u_mid,p[1]);
+    gl.uniform1f(U.u_treble,p[2]);
+    gl.uniform1f(U.u_energy,p[3]);
+    gl.uniform1f(U.u_lens,Number(ctl.lens?.value||72)/100);
+    gl.uniform1f(U.u_disk,Number(ctl.disk?.value||78)/100);
+    gl.uniform1f(U.u_dust,Number(ctl.dust?.value||82)/100);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+
+    p.forEach((v,i)=>{
+      if(meters[i]) meters[i].style.height=(12+v*88)+'%';
+      if(vals[i]) vals[i].textContent=v.toFixed(2);
+    });
+
+    requestAnimationFrame(frame);
   }
-
-  function environment(t,p){
-    fx.clearRect(0,0,W,H);const d=Number(window.GoBaoControls?.dust?.value||82)/100;
-    const neb=[[.06,.24,.22,[38,130,255]],[.94,.25,.20,[175,55,255]],[.92,.72,.24,[255,55,130]],[.10,.72,.22,[30,175,255]]];
-    fx.save();fx.globalCompositeOperation='screen';for(const n of neb){const x=n[0]*W,y=n[1]*H,r=Math.min(W,H)*n[2],g=fx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${n[3].join(',')},${.08*d*(1+p[3]*.3)})`);g.addColorStop(.55,`rgba(${n[3].join(',')},${.03*d})`);g.addColorStop(1,'rgba(0,0,0,0)');fx.fillStyle=g;fx.beginPath();fx.arc(x,y,r,0,Math.PI*2);fx.fill();}fx.restore();
-    sphere(W*.86,H*.20,Math.min(W,H)*.060,colors[0],p[0],'gas',t);
-    sphere(W*.14,H*.72,Math.min(W,H)*.052,colors[1],p[0],'ring',t);
-    sphere(W*.89,H*.73,Math.min(W,H)*.043,colors[2],p[0],'lava',t);
-    sphere(W*.18,H*.18,Math.min(W,H)*.031,colors[3],p[0],'ice',t);
-    sphere(W*.76,H*.82,Math.min(W,H)*.027,colors[4],p[0],'purple',t);
-  }
-
-  function frame(now){resize();const t=(now-start)/1000,p=audioParams(t);background(t,p);blackHole(t,p);environment(t,p);p.forEach((v,i)=>{meters[i].style.height=(12+v*88)+'%';vals[i].textContent=v.toFixed(2);});requestAnimationFrame(frame);}
   requestAnimationFrame(frame);
 })();
