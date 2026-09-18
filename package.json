@@ -6,7 +6,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist:win": "electron-builder --win nsis portable",
+    "dist:win": "electron-builder --win nsis portable --publish never",
     "verify:syntax": "node --check main.js && node --check preload.js && node --check renderer/app.js && node --check renderer/visual.js",
     "verify:audio": "node scripts/selftest-audio.js",
     "verify": "npm run verify:syntax && npm run verify:audio"
