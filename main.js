@@ -1,9 +1,11 @@
-const { app, BrowserWindow, ipcMain, dialog, protocol, net, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, protocol, net, globalShortcut, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
 const { pathToFileURL } = require('url');
+const { TmeMusicCloudProvider } = require('./providers/tme-music-cloud-provider');
+const { TunedGlobalProvider } = require('./providers/tuned-global-provider');
 
 protocol.registerSchemesAsPrivileged([{
   scheme: 'gobao-audio',
@@ -17,71 +19,113 @@ const preparedTracks = new Map();
 
 const AUDIO_EXTS = new Set(['mp3','wav','flac','m4a','aac','ogg','opus','wma','webm','mp4','ape','ac3','aiff','m4b']);
 const PROTECTED_EXTS = new Set(['qmc0','qmc2','qmc3','qmcflac','qmcogg','ncm','kgm','vpr','mflac']);
+const IMAGE_EXTS = new Set(['jpg','jpeg','png','webp']);
 
-function walkFiles(root, predicate, limit = 1200) {
-  const out = [];
-  const stack = [root];
-  while (stack.length && out.length < limit) {
-    const dir = stack.pop();
-    let entries = [];
-    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (_e) { continue; }
-    for (const entry of entries) {
-      if (out.length >= limit) break;
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        if (!entry.name.startsWith('.')) stack.push(full);
-      } else if (entry.isFile() && predicate(full, entry.name)) {
-        out.push(full);
-      }
+const providers = {
+  tme: new TmeMusicCloudProvider({
+    baseUrl: process.env.GOBAO_TME_BASE_URL || '',
+    appId: process.env.GOBAO_TME_APP_ID || '',
+    apiKey: process.env.GOBAO_TME_API_KEY || '',
+    searchPath: process.env.GOBAO_TME_SEARCH_PATH || '',
+    trackPath: process.env.GOBAO_TME_TRACK_PATH || '',
+    lyricsPath: process.env.GOBAO_TME_LYRICS_PATH || '',
+    playbackPath: process.env.GOBAO_TME_PLAYBACK_PATH || '',
+    appIdHeader: process.env.GOBAO_TME_APP_ID_HEADER || '',
+    apiKeyHeader: process.env.GOBAO_TME_API_KEY_HEADER || '',
+    authScheme: process.env.GOBAO_TME_AUTH_SCHEME || ''
+  }),
+  tuned: new TunedGlobalProvider({
+    baseUrl: process.env.GOBAO_TUNED_BASE_URL || '',
+    storeId: process.env.GOBAO_TUNED_STORE_ID || '',
+    country: process.env.GOBAO_TUNED_COUNTRY || '',
+    searchPath: process.env.GOBAO_TUNED_SEARCH_PATH || '',
+    trackPath: process.env.GOBAO_TUNED_TRACK_PATH || '',
+    lyricsPath: process.env.GOBAO_TUNED_LYRICS_PATH || '',
+    streamPathTemplate: process.env.GOBAO_TUNED_STREAM_PATH_TEMPLATE || ''
+  })
+};
+
+function safeProvider(name) {
+  if (name === 'tme') return providers.tme;
+  if (name === 'tuned') return providers.tuned;
+  throw new Error('UNKNOWN_PROVIDER');
+}
+
+function workerwScriptPath() {
+  const packaged = path.join(process.resourcesPath || '', 'workerw.ps1');
+  const dev = path.join(__dirname, 'scripts', 'workerw.ps1');
+  return fs.existsSync(packaged) ? packaged : dev;
+}
+
+function nativeWindowHandleString(win) {
+  const handle = win.getNativeWindowHandle();
+  if (handle.length >= 8) return handle.readBigUInt64LE(0).toString();
+  return String(handle.readUInt32LE(0));
+}
+
+function runWorkerW(mode) {
+  return new Promise((resolve) => {
+    if (process.platform !== 'win32') {
+      resolve({ ok: false, error: 'WINDOWS_ONLY' });
+      return;
     }
-  }
-  return out;
-}
+    const script = workerwScriptPath();
+    if (!fs.existsSync(script)) {
+      resolve({ ok: false, error: 'WORKERW_HELPER_MISSING' });
+      return;
+    }
+    const hwnd = nativeWindowHandleString(mainWindow);
+    const child = spawn('powershell.exe', [
+      '-NoProfile', '-ExecutionPolicy', 'Bypass',
+      '-File', script,
+      '-Mode', mode,
+      '-Hwnd', hwnd
+    ], { windowsHide: true });
 
-function scanAudioLibrary(root) {
-  return walkFiles(root, full => AUDIO_EXTS.has(path.extname(full).toLowerCase().replace(/^\./,'')), 1000)
-    .map(full => ({
-      title: path.basename(full, path.extname(full)),
-      path: full,
-      ext: path.extname(full).toLowerCase().replace(/^\./,'')
-    }));
-}
-
-function scanWallpaperProjects(root) {
-  return walkFiles(root, (_full, name) => name.toLowerCase() === 'project.json', 300).map(projectPath => {
-    let meta = {};
-    try { meta = JSON.parse(fs.readFileSync(projectPath, 'utf8')); } catch (_e) {}
-    return {
-      title: meta.title || meta.name || path.basename(path.dirname(projectPath)),
-      type: meta.type || 'project',
-      projectPath,
-      root: path.dirname(projectPath)
-    };
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', d => { stdout += d.toString(); });
+    child.stderr.on('data', d => { stderr += d.toString(); });
+    child.on('error', () => resolve({ ok: false, error: 'WORKERW_PROCESS_FAILED' }));
+    child.on('close', code => {
+      const line = stdout.trim().split(/\r?\n/).filter(Boolean).pop();
+      let payload = null;
+      try { payload = line ? JSON.parse(line) : null; } catch (_e) {}
+      resolve(payload || { ok: code === 0, error: code === 0 ? null : (stderr.trim() || 'WORKERW_FAILED') });
+    });
   });
 }
 
-function exitDesktopMode() {
-  if (!mainWindow || !desktopModeEnabled) return false;
-  desktopModeEnabled = false;
-  mainWindow.setSkipTaskbar(false);
-  mainWindow.setFocusable(true);
-  mainWindow.setIgnoreMouseEvents(false);
-  mainWindow.setFullScreen(false);
-  if (normalWindowState?.bounds) mainWindow.setBounds(normalWindowState.bounds);
-  if (normalWindowState?.maximized) mainWindow.maximize();
-  return false;
-}
-
-function toggleDesktopMode() {
-  if (!mainWindow) return false;
-  if (desktopModeEnabled) return exitDesktopMode();
+async function enterDesktopMode() {
+  if (!mainWindow) return { enabled: false, mode: 'none', error: 'NO_WINDOW' };
+  if (desktopModeEnabled) return { enabled: true, mode: 'workerw' };
   normalWindowState = { bounds: mainWindow.getBounds(), maximized: mainWindow.isMaximized() };
-  desktopModeEnabled = true;
+
+  if (process.platform !== 'win32') {
+    mainWindow.setFullScreen(true);
+    desktopModeEnabled = true;
+    return { enabled: true, mode: 'fullscreen-fallback' };
+  }
+
+  const display = screen.getPrimaryDisplay();
+  mainWindow.setFullScreen(true);
+  mainWindow.setBounds(display.bounds);
   mainWindow.setSkipTaskbar(true);
   mainWindow.setAlwaysOnTop(false);
-  mainWindow.setFullScreen(true);
-  return true;
+
+  const attached = await runWorkerW('attach');
+  if (!attached.ok) {
+    mainWindow.setSkipTaskbar(false);
+    mainWindow.setFullScreen(false);
+    if (normalWindowState?.bounds) mainWindow.setBounds(normalWindowState.bounds);
+    return { enabled: false, mode: 'none', error: attached.error || 'WORKERW_ATTACH_FAILED' };
+  }
+
+  desktopModeEnabled = true;
+  return { enabled: true, mode: 'workerw', worker: attached.worker || null };
 }
+
+async 
 
 function ffmpegPath() {
   const name = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
@@ -242,6 +286,43 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle('cover:choose', async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: '选择自定义封面',
+      properties: ['openFile'],
+      filters: [{ name: '图片', extensions: ['jpg','jpeg','png','webp'] }]
+    });
+    if (result.canceled || !result.filePaths[0]) return { canceled: true };
+    const file = result.filePaths[0];
+    const ext = path.extname(file).toLowerCase().replace(/^\./,'');
+    if (!IMAGE_EXTS.has(ext)) return { canceled: false, ok: false, errorCode: 'UNSUPPORTED_IMAGE' };
+    const stat = fs.statSync(file);
+    if (stat.size > 10 * 1024 * 1024) return { canceled: false, ok: false, errorCode: 'IMAGE_TOO_LARGE' };
+    const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+    const data = fs.readFileSync(file).toString('base64');
+    return { canceled: false, ok: true, path: file, dataUrl: `data:${mime};base64,${data}` };
+  });
+
+  ipcMain.handle('provider:status', () => ({
+    tme: providers.tme.status(),
+    tuned: providers.tuned.status()
+  }));
+
+  ipcMain.handle('provider:search', async (_event, name, query, options = {}) => {
+    if (typeof query !== 'string' || !query.trim() || query.length > 160) throw new Error('INVALID_QUERY');
+    return safeProvider(name).search(query.trim(), options);
+  });
+
+  ipcMain.handle('provider:lyrics', async (_event, name, id, options = {}) => {
+    if (id === undefined || id === null) throw new Error('INVALID_TRACK_ID');
+    return safeProvider(name).getLyrics(id, options);
+  });
+
+  ipcMain.handle('provider:playback', async (_event, name, id, context = {}) => {
+    if (id === undefined || id === null) throw new Error('INVALID_TRACK_ID');
+    return safeProvider(name).getPlayback(id, context);
+  });
+
   ipcMain.handle('wallpaper:choose-folder', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
       title: '选择 Wallpaper Engine / 视觉素材库文件夹',
@@ -252,8 +333,8 @@ app.whenReady().then(() => {
     return { canceled: false, ok: true, root, items: scanWallpaperProjects(root) };
   });
 
-  ipcMain.handle('app:desktop-mode', () => {
-    return { enabled: toggleDesktopMode() };
+  ipcMain.handle('app:desktop-mode', async () => {
+    return desktopModeEnabled ? exitDesktopMode() : enterDesktopMode();
   });
 
   ipcMain.handle('app:fullscreen', () => {
@@ -265,7 +346,7 @@ app.whenReady().then(() => {
   createWindow();
 
   globalShortcut.register('F8', () => {
-    if (desktopModeEnabled) exitDesktopMode();
+    if (desktopModeEnabled) void exitDesktopMode();
   });
 
   app.on('activate', () => {
