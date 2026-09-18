@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Go宝音乐 V0.3</title>
+<title>Go宝音乐 V0.4</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,8 +13,8 @@
     <canvas id="spacefx"></canvas>
 
     <div class="topbar">
-      <div class="brand"><span class="dot"></span><div><b>GOBAO MUSIC</b><small>V0.3 · IMMERSIVE MUSIC OS</small></div></div>
-      <div class="badge">LOCAL · LYRICS · AUTOMIX · AI DJ · DESKTOP</div>
+      <div class="brand"><span class="dot"></span><div><b>GOBAO MUSIC</b><small>V0.4 · PRO AUDIO + WORKERW + PROVIDERS</small></div></div>
+      <div class="badge">DUAL DECK · WORKERW · COVER · LYRICS OFFSET · PROVIDERS</div>
     </div>
 
     <div class="stageTools">
@@ -76,6 +76,11 @@
         <button id="resetBtn">恢复默认</button>
       </div>
       <div class="status" id="status">等待导入音乐。普通 MP3 / WAV / FLAC / M4A / AAC / OGG / OPUS / WMA 等由后台自动处理。</div>
+      <div class="coverTools">
+        <button id="chooseCoverBtn">自定义封面</button>
+        <button id="clearCoverBtn">恢复默认封面</button>
+        <span id="coverStatus">默认封面</span>
+      </div>
 
       <div class="setting"><label>引力透镜强度 <output id="lensOut">72%</output></label><input id="lens" type="range" min="0" max="100" value="72"></div>
       <div class="setting"><label>吸积盘亮度 <output id="diskOut">78%</output></label><input id="disk" type="range" min="0" max="100" value="78"></div>
@@ -104,6 +109,7 @@
         <button id="chooseLyricsBtn" class="primary">导入 LRC 歌词</button>
       </div>
       <p class="featureNote">歌词会按照时间轴自动滚动，并在主视觉中央以舞台形式显示。</p>
+      <div class="setting"><label>歌词时间偏移 <output id="lyricOffsetOut">0.0s</output></label><input id="lyricOffset" type="range" min="-5" max="5" step="0.1" value="0"></div>
       <div class="miniLyricsPreview">
         <span>当前歌词：</span>
         <b>与播放进度同步</b>
@@ -120,7 +126,8 @@
         <button id="automixBtn" class="primary">开启 AutoMix</button>
       </div>
       <div class="setting"><label>过渡秒数 <output>3s</output></label><input id="mixSeconds" type="range" min="1" max="8" value="3" oninput="this.previousElementSibling.querySelector('output').textContent=this.value+'s'"></div>
-      <p class="featureNote">当前实现安全淡入淡出和自动续播；双 Deck 无缝重叠混音将在 Windows 实机音频验证后启用。</p>
+      <p class="featureNote">双 Deck 会提前准备下一首，并在结尾时间窗内真正重叠播放：Deck A 淡出、Deck B 同时淡入，过渡完成后自动切换主 Deck。</p>
+      <div class="deckStatus"><span id="deckAState">Deck A · 待机</span><span id="deckBState">Deck B · 待机</span></div>
       <div id="queueList" class="listBox"></div>
     </section>
 
@@ -134,20 +141,28 @@
       <div class="panelActions">
         <button id="wallpaperScanBtn" class="primary">扫描 Wallpaper 素材库</button>
       </div>
-      <p class="featureNote">只读取 project.json 元数据，不自动执行第三方项目。后续可把本地视频/场景接入视觉层。</p>
+      <p class="featureNote">只读取 project.json 元数据，不自动执行第三方项目。Windows 桌面模式优先使用 WorkerW 挂载到桌面图标后层；失败时自动回退，不破坏桌面。</p>
       <div id="wallpaperList" class="listBox"></div>
       <div class="status" id="desktopModeStatus">当前为普通窗口模式</div>
     </section>
 
     <section class="featurePanel" data-feature="providers">
+      <div class="panelActions"><button id="providerRefreshBtn" class="primary">刷新 Provider 状态</button></div>
+      <div id="providerRuntimeStatus" class="status">正在检查企业曲库配置…</div>
+      <div class="providerTest">
+        <select id="providerSelect"><option value="tuned">Tuned Global</option><option value="tme">TME Music Cloud</option></select>
+        <input id="providerSearchInput" placeholder="输入歌名 / 歌手测试正式曲库">
+        <button id="providerSearchBtn">搜索</button>
+      </div>
+      <pre id="providerSearchResults" class="providerResults">拿到企业凭证后，可在这里直接验证搜索接口。</pre>
       <div class="providerCard ready">
         <b>Local Music Provider</b><span>已启用</span><small>本地音乐、FFmpeg 自动兼容、FFT</small>
       </div>
-      <div class="providerCard">
-        <b>TME Music Cloud</b><span>等待商务凭证</span><small>正版中国大陆曲库 / 搜索 / 播放 / 版权</small>
+      <div class="providerCard" id="tmeProviderCard">
+        <b>TME Music Cloud</b><span id="tmeProviderState">等待商务凭证</span><small>正版中国大陆曲库 / 搜索 / 播放 / 版权。认证 Header 与 Endpoint 只按 TME 正式文档配置，不在客户端写死。</small>
       </div>
-      <div class="providerCard">
-        <b>Tuned Global</b><span>等待商务凭证</span><small>全球曲库 / Lyrics / Playback / Rights / Subscription</small>
+      <div class="providerCard" id="tunedProviderCard">
+        <b>Tuned Global</b><span id="tunedProviderState">等待商务凭证</span><small>全球曲库 / Lyrics / Playback / Rights / Subscription；StoreId 和 OAuth 只保存在主进程/服务端。</small>
       </div>
       <div class="providerCard warning">
         <b>非官方平台接口</b><span>不作为商用 Provider</span><small>不把 QQ / 网易云 / 汽水逆向接口作为 Go宝正式曲库来源</small>
@@ -159,6 +174,7 @@
 </div>
 
 <audio id="audio" preload="metadata"></audio>
+<audio id="audioB" preload="metadata"></audio>
 <div id="integrationToast" class="integrationToast"></div>
 
 <script src="app.js"></script>
