@@ -149,6 +149,12 @@
     <section class="featurePanel" data-feature="providers">
       <div class="panelActions"><button id="providerRefreshBtn" class="primary">刷新 Provider 状态</button></div>
       <div id="providerRuntimeStatus" class="status">正在检查企业曲库配置…</div>
+      <div class="providerTest">
+        <select id="providerSelect"><option value="tuned">Tuned Global</option><option value="tme">TME Music Cloud</option></select>
+        <input id="providerSearchInput" placeholder="输入歌名 / 歌手测试正式曲库">
+        <button id="providerSearchBtn">搜索</button>
+      </div>
+      <pre id="providerSearchResults" class="providerResults">拿到企业凭证后，可在这里直接验证搜索接口。</pre>
       <div class="providerCard ready">
         <b>Local Music Provider</b><span>已启用</span><small>本地音乐、FFmpeg 自动兼容、FFT</small>
       </div>
