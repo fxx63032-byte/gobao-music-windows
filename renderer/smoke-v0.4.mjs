@@ -38,7 +38,7 @@ await context.addInitScript(({wavA,wavB})=>{
       {title:'Smoke A',path:'C:\\Smoke\\A.wav',ext:'wav'},
       {title:'Smoke B',path:'C:\\Smoke\\B.wav',ext:'wav'}
     ]}),
-    chooseLyrics:async()=>({canceled:false,ok:true,content:'[00:00.00]第一行\\n[00:01.00]第二行'}),
+    chooseLyrics:async()=>({canceled:false,ok:true,content:['[00:00.00]第一行','[00:01.00]第二行'].join(String.fromCharCode(10))}),
     chooseCover:async()=>({canceled:false,ok:true,dataUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='}),
     chooseWallpaperFolder:async()=>({canceled:false,ok:true,items:[]}),
     toggleDesktopMode:async()=>({enabled:true,mode:'workerw'}),
