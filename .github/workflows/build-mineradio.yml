@@ -1,0 +1,59 @@
+name: Build Mineradio Upstream
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".gitmodules"
+      - "Mineradio"
+      - ".github/workflows/build-mineradio.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout with Mineradio
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Verify pinned upstream
+        shell: powershell
+        run: |
+          Set-Location Mineradio
+          $sha = git rev-parse HEAD
+          Write-Host "Mineradio upstream: $sha"
+          if ($sha -ne "94025664d71a8e6cedbb8eca56309a10ca1e1562") { throw "Unexpected Mineradio commit: $sha" }
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: Mineradio/package-lock.json
+
+      - name: Install Mineradio dependencies
+        working-directory: Mineradio
+        run: npm ci --no-audit --no-fund
+
+      - name: Build Mineradio Windows installer
+        working-directory: Mineradio
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: npm run build:win -- --publish never
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mineradio-2.2.0-Upstream
+          path: |
+            Mineradio/dist/*Setup.exe
+            Mineradio/dist/*.yml
+          if-no-files-found: error
+          compression-level: 0

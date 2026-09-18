@@ -1,0 +1,4 @@
+[submodule "Mineradio"]
+	path = Mineradio
+	url = https://github.com/XxHuberrr/Mineradio.git
+	branch = main
