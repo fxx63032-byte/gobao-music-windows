@@ -125,7 +125,18 @@ async function enterDesktopMode() {
   return { enabled: true, mode: 'workerw', worker: attached.worker || null };
 }
 
-async 
+async function exitDesktopMode() {
+  if (!mainWindow || !desktopModeEnabled) return { enabled: false, mode: 'none' };
+  if (process.platform === 'win32') await runWorkerW('detach');
+  desktopModeEnabled = false;
+  mainWindow.setSkipTaskbar(false);
+  mainWindow.setFocusable(true);
+  mainWindow.setIgnoreMouseEvents(false);
+  mainWindow.setFullScreen(false);
+  if (normalWindowState?.bounds) mainWindow.setBounds(normalWindowState.bounds);
+  if (normalWindowState?.maximized) mainWindow.maximize();
+  return { enabled: false, mode: 'none' };
+}
 
 function ffmpegPath() {
   const name = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
