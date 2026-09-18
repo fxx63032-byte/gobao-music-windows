@@ -1,4 +1,4 @@
-name: Build GoBao Music Windows V0.2
+name: Build GoBao Music Windows V0.3
 
 on:
   workflow_dispatch:
@@ -58,7 +58,7 @@ jobs:
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: GoBaoMusic-Windows-V0.2
+          name: GoBaoMusic-Windows-V0.3
           path: |
             dist/*.exe
             dist/*.blockmap
