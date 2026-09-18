@@ -1,13 +1,13 @@
 {
   "name": "gobao-music-windows",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
-  "description": "Go宝音乐 Windows V0.3 immersive music platform",
+  "description": "Go宝音乐 Windows V0.4 dual-deck immersive music platform",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dist:win": "electron-builder --win nsis portable --publish never",
-    "verify:syntax": "node --check main.js && node --check preload.js && node --check renderer/app.js && node --check renderer/visual.js && node --check renderer/integration.js",
+    "verify:syntax": "node --check main.js && node --check preload.js && node --check renderer/app.js && node --check renderer/visual.js && node --check renderer/integration.js && node --check providers/provider-contract.js && node --check providers/local-provider.js && node --check providers/tme-music-cloud-provider.js && node --check providers/tuned-global-provider.js",
     "verify:audio": "node scripts/selftest-audio.js",
     "verify": "npm run verify:syntax && npm run verify:audio"
   },
@@ -36,6 +36,10 @@
           "ffmpeg.exe",
           "ffprobe.exe"
         ]
+      },
+      {
+        "from": "scripts/workerw.ps1",
+        "to": "workerw.ps1"
       }
     ],
     "win": {
