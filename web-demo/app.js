@@ -179,7 +179,8 @@
     renderLocal();toast('已导入 '+files.length+' 首本地音乐');
   }
 
-  $('#nav .navItem').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));\n  $('#mobileNav [data-page]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
+  $('#nav .navItem').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
+  $('#mobileNav [data-page]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
   document.addEventListener('click',async e=>{
     const jump=e.target.closest('[data-page-jump]');if(jump){go(jump.dataset.pageJump);return}
     const card=e.target.closest('[data-playlist]');if(card){openPlaylist(card.dataset.playlist);return}
