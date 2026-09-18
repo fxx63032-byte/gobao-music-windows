@@ -1,4 +1,4 @@
-:root{color-scheme:dark;--panel-alpha:.82;--text:#f8f5ff;--muted:#aaa0b7;--line:rgba(187,126,255,.18)}
+:root{color-scheme:dark;--panel-alpha:.82;--text:#f8f5ff;--muted:#aaa0b7;--line:rgba(187,126,255,.18);--cinema-scale:1;--cinema-x:0px;--cinema-y:0px}
 *{box-sizing:border-box}html,body{margin:0;background:#05040a;color:var(--text);font-family:Segoe UI,"Microsoft YaHei",Arial,sans-serif;overflow:hidden}
 .app{height:100vh;padding:14px;display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:14px}.visualStage{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:24px;background:#030208;min-width:0}.visualStage canvas{position:absolute;inset:0;width:100%;height:100%}#gl{z-index:0}#spacefx{z-index:1;pointer-events:none}
 .topbar{position:absolute;z-index:3;left:18px;right:18px;top:16px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}.brand,.badge{background:rgba(8,6,13,.52);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);border-radius:999px;padding:9px 12px}.brand{display:flex;align-items:center;gap:10px}.dot{width:9px;height:9px;border-radius:50%;background:#cf8fff;box-shadow:0 0 16px #cf8fff}.brand b{font-size:13px;letter-spacing:.14em}.brand small{display:block;font-size:10px;color:var(--muted);margin-top:2px}.badge{font-size:10px;color:#d9cfe6}
@@ -21,3 +21,5 @@
 .integrationToast{position:fixed;z-index:80;left:50%;bottom:24px;transform:translate(-50%,18px);opacity:0;pointer-events:none;background:rgba(15,10,20,.92);border:1px solid rgba(206,155,255,.18);border-radius:999px;padding:10px 15px;color:#ede4f6;font-size:11px;transition:.2s}.integrationToast.show{opacity:1;transform:translate(-50%,0)}
 #automixBtn.active{box-shadow:0 0 26px rgba(185,93,255,.18)}
 @media(max-width:1180px){.featureTabs{grid-template-columns:repeat(4,1fr)}.panel{max-height:none}.lyricsOverlay{width:80%}}
+
+#gl,#spacefx{transform:translate3d(var(--cinema-x),var(--cinema-y),0) scale(var(--cinema-scale));transform-origin:center center;transition:transform 70ms linear}
