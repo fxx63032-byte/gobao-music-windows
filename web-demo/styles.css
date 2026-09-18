@@ -128,3 +128,21 @@ button.primary{border-color:#b678ff!important;background:linear-gradient(135deg,
   .trackRowItem{grid-template-columns:40px minmax(0,1fr) 88px}.trackAlbum,.trackMood{display:none}.visualShell{grid-template-columns:1fr;height:94vh}.visualPanel{display:none}
   .miniPlayer{height:82px;grid-template-columns:40px 1fr 34px 42px 34px 42px;padding:8px 10px}.miniProgress,.volume,#favCurrentBtn{display:none}
 }
+
+.mobileNav{display:none}
+@media(max-width:760px){
+  .mobileNav{
+    position:fixed;z-index:55;left:10px;right:10px;bottom:88px;height:56px;
+    display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:5px;
+    border:1px solid rgba(255,255,255,.08);border-radius:17px;
+    background:rgba(11,8,17,.92);backdrop-filter:blur(18px);
+    box-shadow:0 14px 38px rgba(0,0,0,.36)
+  }
+  .mobileNav button{
+    border:0;background:transparent;color:#8d8397;border-radius:12px;
+    display:grid;place-items:center;gap:1px;font-size:14px;cursor:pointer
+  }
+  .mobileNav button span{font-size:8px}
+  .mobileNav button.active{color:white;background:linear-gradient(135deg,#4f2f78,#8c46bf)}
+  .content{padding-bottom:172px}
+}
