@@ -2,7 +2,7 @@
   "name": "gobao-music-windows",
   "version": "0.2.0",
   "private": true,
-  "description": "Go宝音乐 Windows V0.2 desktop player",
+  "description": "GO宝音乐 Windows V0.2 desktop player",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -17,13 +17,51 @@
   },
   "build": {
     "appId": "com.gobao.music",
-    "productName": "Go宝音乐",
-    "directories": { "output": "dist" },
-    "files": ["main.js","preload.js","renderer/**/*","providers/**/*","package.json"],
-    "extraResources": [{"from":"vendor/ffmpeg/bin","to":"bin","filter":["ffmpeg.exe","ffprobe.exe"]}],
-    "win": {
-      "target": [{"target":"nsis","arch":["x64"]},{"target":"portable","arch":["x64"]}]
+    "productName": "GO宝音乐",
+    "directories": {
+      "output": "dist"
     },
-    "nsis": {"oneClick":false,"allowToChangeInstallationDirectory":true,"createDesktopShortcut":true,"createStartMenuShortcut":true}
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "providers/**/*",
+      "package.json",
+      "build/icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "vendor/ffmpeg/bin",
+        "to": "bin",
+        "filter": [
+          "ffmpeg.exe",
+          "ffprobe.exe"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "artifactName": "GOBaoMusic-${version}-${arch}-${target}.${ext}"
   }
 }
