@@ -102,13 +102,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "gobao-windows-v0.2.0-" + $env:GITHUB_SHA.Substring(0, 7)
+          $tag = "gobao-windows-v0.2.1-" + $env:GITHUB_SHA.Substring(0, 7)
           $exe = Get-ChildItem -Path dist -Filter "GOBaoMusic-*-Setup.exe" | Select-Object -First 1
           if (-not $exe) { throw "GO宝音乐 Setup.exe not found" }
 
           cmd /c "gh release view $tag --repo $env:GITHUB_REPOSITORY >nul 2>nul"
           if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --repo "$env:GITHUB_REPOSITORY" --target "$env:GITHUB_SHA" --title "GO宝音乐 Windows V0.2" --notes "GO宝音乐 Windows 安装版。可直接下载 EXE，无需解压 GitHub Actions Artifact。"
+            gh release create $tag --repo "$env:GITHUB_REPOSITORY" --target "$env:GITHUB_SHA" --title "GO宝音乐 Windows V0.2.1" --notes "修复 DIY 常用页缺少四个动态背景入口，并移除上游大小眼登录彩蛋门禁。GO宝音乐 Windows 安装版可直接下载 EXE。"
             if ($LASTEXITCODE -ne 0) { throw "Release creation failed" }
           }
 

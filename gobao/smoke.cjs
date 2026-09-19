@@ -3,9 +3,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const assert = require('node:assert/strict');
+
 app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'gobao-media-qa-')));
 app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
 const timeout=setTimeout(()=>{console.error('Media smoke timeout');app.exit(1);},90000);
+
 app.whenReady().then(async()=>{
   const win = new BrowserWindow({show:false,width:1280,height:800,webPreferences:{nodeIntegration:false,contextIsolation:true,backgroundThrottling:false,offscreen:true}});
   const errors=[];
@@ -20,15 +22,78 @@ app.whenReady().then(async()=>{
   await probe.body.cancel();
   await win.loadURL(origin);
   const run=code=>win.webContents.executeJavaScript(code,true);
-  for(let i=0;i<100;i++) { if(await run('!!document.getElementById("gobao-background-library")'))break; await new Promise(r=>setTimeout(r,100)); }
-  assert.equal(await run('typeof gobaoSelectBackground'), 'function');
+  const waitFor=async(code)=>{
+    for(let i=0;i<100;i++) {
+      if(await run(code)) return;
+      await new Promise(r=>setTimeout(r,100));
+    }
+    throw new Error('Timed out waiting for: '+code);
+  };
+
+  await waitFor('!!document.getElementById("gobao-background-library") && document.querySelectorAll("#gobao-background-quick-grid [data-gobao-background]").length===4');
+  assert.equal(await run('typeof gobaoSelectBackground'),'function');
+  await run('dismissSplash({instant:true})');
+
+  const placement=await run(`(()=>{
+    const grid=document.getElementById('gobao-background-quick-grid');
+    const group=grid.closest('section.fx-console-group');
+    return {
+      cards:grid.querySelectorAll('[data-gobao-background]').length,
+      commonPage:!!grid.closest('#fx-console-page-home'),
+      groupOpen:!!(group&&group.classList.contains('open')),
+      firstGroup:!!(group&&group.parentElement&&group.parentElement.firstElementChild===group)
+    };
+  })()`);
+  assert.deepEqual(placement,{cards:4,commonPage:true,groupOpen:true,firstGroup:true});
+
+  assert.equal(await run('gobaoDisableAutomaticLoginPrompts()'),true);
+  assert.equal(await run('maybeRunStartupLoginGuide("qa")'),false);
+  const evidence=path.resolve(__dirname,'../verification');
+  fs.mkdirSync(evidence,{recursive:true});
+  const login=await run(`(async()=>{
+    await showLoginModal({provider:'qishui',source:'qa-other-entry'});
+    await new Promise(r=>setTimeout(r,650));
+    const modal=document.getElementById('login-modal');
+    const gate=document.getElementById('login-easter-egg-gate');
+    const visible=id=>getComputedStyle(document.getElementById(id)).display!=='none';
+    const result={
+      open:modal.classList.contains('show'),
+      locked:modal.classList.contains('login-easter-egg-locked'),
+      gateHidden:getComputedStyle(gate).display==='none'&&gate.getAttribute('aria-hidden')==='true',
+      graphVisible:visible('login-node-graph'),
+      neteaseVisible:visible('login-provider-netease'),
+      qqVisible:visible('login-provider-qq'),
+      qishuiHidden:!visible('login-provider-qishui'),
+      provider:loginProvider,
+      accountIcon:!!document.querySelector('#user-btn .gobao-account-icon'),
+      compactEyes:!!document.querySelector('#user-btn .login-easter-eyes')
+    };
+    return result;
+  })()`);
+  assert.deepEqual(login,{open:true,locked:false,gateHidden:true,graphVisible:true,neteaseVisible:true,qqVisible:true,qishuiHidden:true,provider:'netease',accountIcon:true,compactEyes:false});
+  fs.writeFileSync(path.join(evidence,'direct-login-without-eye-gate.png'),(await win.webContents.capturePage()).toPNG());
+  await run('closeLoginModal()');
+  await new Promise(r=>setTimeout(r,700));
+
+  await run('applyDiyMode(true,{save:false,toast:false,animate:false});toggleFxPanel(true);setFxPanelTab("home")');
+  await new Promise(r=>setTimeout(r,500));
+  const visibleLibrary=await run(`(()=>{
+    const panel=document.getElementById('fx-panel');
+    const cards=Array.from(document.querySelectorAll('#gobao-background-quick-grid [data-gobao-background]'));
+    return {panel:panel.classList.contains('show')||panel.classList.contains('peek'),cards:cards.filter(card=>card.getBoundingClientRect().height>0&&getComputedStyle(card).display!=='none').length};
+  })()`);
+  assert.deepEqual(visibleLibrary,{panel:true,cards:4});
+  fs.writeFileSync(path.join(evidence,'dynamic-backgrounds-in-diy.png'),(await win.webContents.capturePage()).toPNG());
+
   await run('document.getElementById("gobao-library-open").click()');
   assert.equal(await run('gobaoLibraryDialog.open'),true);
-  await run('dismissSplash({instant:true})');
+  assert.equal(await run('document.querySelectorAll("#gobao-background-library [data-gobao-background]").length'),4);
+  await run('gobaoLibraryDialog.close()');
+
   const results=[];
   for(let i=0;i<4;i++) {
     const result=await run(`(async()=>{
-      document.querySelectorAll('[data-gobao-background]')[${i}].click();
+      document.querySelectorAll('#gobao-background-quick-grid [data-gobao-background]')[${i}].click();
       const video=document.getElementById('custom-bg-video');
       const start=performance.now();
       while(performance.now()-start<12000) {
@@ -39,34 +104,39 @@ app.whenReady().then(async()=>{
       if(video.readyState<2 || video.paused || video.currentTime<=0.1)throw new Error('Video did not play');
       video.currentTime=Math.max(0,video.duration-0.15);
       await new Promise(r=>setTimeout(r,800));
-      return {index:${i},width:video.videoWidth,height:video.videoHeight,loop:video.loop,muted:video.muted,wrapped:video.currentTime<3,fit:getComputedStyle(video).objectFit,selected:document.querySelectorAll('[aria-pressed="true"][data-gobao-background]').length};
+      return {
+        index:${i},width:video.videoWidth,height:video.videoHeight,loop:video.loop,muted:video.muted,
+        wrapped:video.currentTime<3,fit:getComputedStyle(video).objectFit,
+        quickSelected:document.querySelectorAll('#gobao-background-quick-grid [aria-pressed="true"]').length,
+        librarySelected:document.querySelectorAll('#gobao-background-library [aria-pressed="true"]').length
+      };
     })()`);
     assert.equal(result.width,1080);assert.equal(result.height,1920);
-    assert.equal(result.loop,true);assert.equal(result.muted,true);assert.equal(result.wrapped,true);assert.equal(result.fit,'contain');assert.equal(result.selected,1);
+    assert.equal(result.loop,true);assert.equal(result.muted,true);assert.equal(result.wrapped,true);assert.equal(result.fit,'contain');
+    assert.equal(result.quickSelected,1);assert.equal(result.librarySelected,1);
     results.push(result);
   }
-  await run(`document.querySelectorAll('[data-gobao-background]').forEach(b=>b.click())`);
   assert.equal(await run('fx.backgroundMedia.id'),'gobao:af957e69081e83aa8714f18270241ea4');
+
   const systemReducedMotion=await run('window.matchMedia("(prefers-reduced-motion: reduce)").matches');
   win.webContents.debugger.attach('1.3');
-  await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', {features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
+  await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
   const audio=await run(`(()=>{window.requestAnimationFrame=()=>0;gobaoAudioGlow=0;gobaoUpdateBackgroundAudio({energy:1,beat:1},true);const active=gobaoAudioGlow;for(let i=0;i<100;i++)gobaoUpdateBackgroundAudio({energy:1,beat:1},false);return {active,paused:gobaoAudioGlow};})()`);
   assert.ok(audio.active>0);assert.ok(audio.paused<0.0001);
-  await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', {features:[{name:'prefers-reduced-motion',value:'reduce'}]});
+  await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
   const reduced=await run('(()=>{gobaoAudioGlow=0;gobaoUpdateBackgroundAudio({energy:1,beat:1},true);return gobaoAudioGlow;})()');
   assert.equal(reduced,0);
-  await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', {features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
-  const evidence=path.resolve(__dirname,'../verification');fs.mkdirSync(evidence,{recursive:true});
-  fs.writeFileSync(path.join(evidence,'dynamic-library.png'),(await win.webContents.capturePage()).toPNG());
+  await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
+
   await win.webContents.reload();
-  await new Promise(resolve=>win.webContents.once('did-finish-load',resolve));
-  for(let i=0;i<100;i++) { if(await run('typeof fx!=="undefined" && !!fx.backgroundMedia'))break;await new Promise(r=>setTimeout(r,100)); }
+  await waitFor('typeof fx!=="undefined" && !!fx.backgroundMedia && !!document.getElementById("gobao-background-library")');
   assert.equal(await run('fx.backgroundMedia.id'),'gobao:af957e69081e83aa8714f18270241ea4');
   await run('document.getElementById("gobao-library-clear").click()');
   assert.equal(await run('document.body.classList.contains("gobao-background-active")'),false);
   assert.equal(await run('document.getElementById("custom-bg-video").getAttribute("src")'),null);
   assert.deepEqual(errors,[]);
-  const report={ok:true,transport:"http",platform:process.platform,electron:process.versions.electron,results,audio,systemReducedMotion,reducedMotion:true,persistence:true,clear:true};
+  const report={ok:true,transport:'http',platform:process.platform,electron:process.versions.electron,placement,visibleLibrary,login,results,audio,systemReducedMotion,reducedMotion:true,persistence:true,clear:true};
   fs.writeFileSync(path.join(evidence,'dynamic-library-smoke.json'),JSON.stringify(report,null,2));
-  console.log(JSON.stringify(report));clearTimeout(timeout);app.exit(0);
+  console.log(JSON.stringify(report));
+  clearTimeout(timeout);app.exit(0);
 }).catch(e=>{console.error(e.stack);clearTimeout(timeout);app.exit(1);});

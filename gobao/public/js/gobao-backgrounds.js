@@ -3,6 +3,13 @@ var gobaoBackgroundBase = 'assets/gobao/dynamic-backgrounds/';
 var gobaoLibraryDialog;
 var gobaoLibraryStatus;
 var gobaoAudioGlow = 0;
+function gobaoDisableAutomaticLoginPrompts() { return true; }
+function gobaoPrepareLoginModal(modal) {
+  if (!modal) return;
+  modal.classList.remove('login-easter-egg-locked', 'login-easter-egg-unlocking');
+  var gate = document.getElementById('login-easter-egg-gate');
+  if (gate) gate.setAttribute('aria-hidden', 'true');
+}
 function gobaoNormalizeMedia(value) {
   if (!value || value.type !== 'video') return null;
   var item = gobaoBackgroundManifest.items.find(function (item) {
@@ -41,6 +48,30 @@ async function gobaoSelectBackground(item) {
     gobaoLibraryStatus.textContent = '背景暂时无法切换，请关闭桌面壁纸后重试。';
   }
 }
+function gobaoMakeBackgroundCard(item, compact) {
+  var button = document.createElement('button');
+  button.type = 'button';
+  button.className = compact ? 'gobao-background-card compact' : 'gobao-background-card';
+  button.dataset.gobaoBackground = item.id;
+  button.setAttribute('aria-pressed','false');
+  button.setAttribute('aria-label','切换到' + item.name);
+  var image = document.createElement('img');
+  image.src = gobaoBackgroundBase + item.poster;
+  image.alt = '';
+  image.width = 480;
+  image.height = 854;
+  button.appendChild(image);
+  var copy = document.createElement('span');
+  var title = document.createElement('b');
+  title.textContent = item.name;
+  var hint = document.createElement('small');
+  hint.textContent = '点击立即切换';
+  copy.appendChild(title);
+  copy.appendChild(hint);
+  button.appendChild(copy);
+  button.addEventListener('click',function () { gobaoSelectBackground(item); });
+  return button;
+}
 function gobaoInitLibrary() {
   var open = document.getElementById('gobao-library-open');
   if (!open || gobaoLibraryDialog) return;
@@ -51,20 +82,10 @@ function gobaoInitLibrary() {
   document.body.appendChild(dialog);
   gobaoLibraryStatus = document.getElementById('gobao-library-status');
   var grid = dialog.querySelector('.gobao-background-grid');
+  var quickGrid = document.getElementById('gobao-background-quick-grid');
   gobaoBackgroundManifest.items.forEach(function (item) {
-    var button = document.createElement('button');
-    button.type = 'button';
-    button.dataset.gobaoBackground = item.id;
-    button.setAttribute('aria-pressed','false');
-    var image = document.createElement('img');
-    image.src = gobaoBackgroundBase+item.poster;
-    image.alt = '';
-    button.appendChild(image);
-    var label = document.createElement('span');
-    label.textContent = item.name;
-    button.appendChild(label);
-    button.addEventListener('click',function () { gobaoSelectBackground(item); });
-    grid.appendChild(button);
+    grid.appendChild(gobaoMakeBackgroundCard(item, false));
+    if (quickGrid) quickGrid.appendChild(gobaoMakeBackgroundCard(item, true));
   });
   open.addEventListener('click',function () { gobaoSyncBackground(customBackgroundActiveMedia()); dialog.showModal(); });
   document.getElementById('gobao-library-close').addEventListener('click',function () { dialog.close(); });
