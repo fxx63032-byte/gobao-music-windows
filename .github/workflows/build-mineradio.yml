@@ -50,11 +50,10 @@ jobs:
         working-directory: Mineradio
         run: npm ci --no-audit --no-fund
 
-      - name: Apply and verify GO宝 dynamic library and QQ login fix
+      - name: Apply and verify GO宝 dynamic library
         run: |
           node gobao/apply.cjs
           node gobao/verify.cjs
-          node gobao/verify-login.cjs
 
       - name: Windows Electron dynamic media smoke test
         run: .\Mineradio\node_modules\.bin\electron.cmd gobao/smoke.cjs
@@ -103,13 +102,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "gobao-windows-v0.2.6-" + $env:GITHUB_SHA.Substring(0, 7)
+          $tag = "gobao-windows-v0.2.5-" + $env:GITHUB_SHA.Substring(0, 7)
           $exe = Get-ChildItem -Path dist -Filter "GOBaoMusic-*-Setup.exe" | Select-Object -First 1
           if (-not $exe) { throw "GO宝音乐 Setup.exe not found" }
 
           cmd /c "gh release view $tag --repo $env:GITHUB_REPOSITORY >nul 2>nul"
           if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --repo "$env:GITHUB_REPOSITORY" --target "$env:GITHUB_SHA" --title "GO宝音乐 Windows V0.2.6" --notes "修复 QQ 登录旧彩蛋门禁残留：GO宝内置 QQ 官方登录窗口不再被旧门禁拦截，QQ Cookie 保存接口在旧状态明确未解锁时也会进入正常校验；界面明确说明不会读取外部 QQ音乐 Windows 客户端。保留六个动态视频背景素材。真人扫码授权仍需用户本人完成。"
+            gh release create $tag --repo "$env:GITHUB_REPOSITORY" --target "$env:GITHUB_SHA" --title "GO宝音乐 Windows V0.2.5" --notes "修复选择雨幕霓虹等普通视觉预设后仍被 GO宝视频遮挡的问题；六个动态素材继续支持桌面三联满屏和手机宽度单画面。GO宝音乐 Windows 安装版可直接下载 EXE。"
             if ($LASTEXITCODE -ne 0) { throw "Release creation failed" }
           }
 
