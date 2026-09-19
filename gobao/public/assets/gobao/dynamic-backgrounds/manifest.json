@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "source": "User supplied original videos; source filenames preserved.",
+  "items": [
+    {
+      "id": "9932a0694a6812706edf2ca73f2f08b1",
+      "name": "动态背景 1",
+      "file": "9932a0694a6812706edf2ca73f2f08b1.mp4",
+      "poster": "9932a0694a6812706edf2ca73f2f08b1.jpg",
+      "bytes": 13435345,
+      "sha256": "8af58d576786319a12a6a6583f7a2d6ec76445a039a01fad3ec741cc31bfe974",
+      "codec": "h264",
+      "width": 1080,
+      "height": 1920,
+      "duration": 10.733133
+    },
+    {
+      "id": "54b153b2200de017af3b74c160988617",
+      "name": "动态背景 2",
+      "file": "54b153b2200de017af3b74c160988617.mp4",
+      "poster": "54b153b2200de017af3b74c160988617.jpg",
+      "bytes": 13997349,
+      "sha256": "af2e874544d0de90377a256bc6970ff8f976a119d5a92075347eefad9ca89168",
+      "codec": "h264",
+      "width": 1080,
+      "height": 1920,
+      "duration": 12.56
+    },
+    {
+      "id": "0e921f2d102de93dd7c5933d3b31c056",
+      "name": "动态背景 3",
+      "file": "0e921f2d102de93dd7c5933d3b31c056.mp4",
+      "poster": "0e921f2d102de93dd7c5933d3b31c056.jpg",
+      "bytes": 14545580,
+      "sha256": "fb314deeb6fb5dcfce985db9431ff2ce592d374cb03d035cc65b8a501bd34a01",
+      "codec": "h264",
+      "width": 1080,
+      "height": 1920,
+      "duration": 12.066667
+    },
+    {
+      "id": "af957e69081e83aa8714f18270241ea4",
+      "name": "动态背景 4",
+      "file": "af957e69081e83aa8714f18270241ea4.mp4",
+      "poster": "af957e69081e83aa8714f18270241ea4.jpg",
+      "bytes": 20009486,
+      "sha256": "e5958f3900fe99f474e43550cf4cc525ff58bd756f66bd9e3e6c3d5620c52a56",
+      "codec": "h264",
+      "width": 1080,
+      "height": 1920,
+      "duration": 20.48
+    }
+  ]
+}

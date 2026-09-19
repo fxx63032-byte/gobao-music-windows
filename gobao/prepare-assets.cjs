@@ -1,0 +1,21 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const {execFileSync} = require('node:child_process');
+const names = ['9932a0694a6812706edf2ca73f2f08b1','54b153b2200de017af3b74c160988617','0e921f2d102de93dd7c5933d3b31c056','af957e69081e83aa8714f18270241ea4'];
+const source = process.argv[2];
+if (!source) throw new Error('Provide the directory containing the four original MP4 files');
+const target = path.join(__dirname, 'public/assets/gobao/dynamic-backgrounds');
+fs.mkdirSync(target, {recursive:true});
+const items = names.map((name, i) => {
+  const file = name + '.mp4';
+  const input = path.join(source,file);
+  const probe = JSON.parse(execFileSync('ffprobe',['-v','error','-show_streams','-show_format','-of','json',input],{encoding:'utf8'}));
+  const video = probe.streams.find(s => s.codec_type === 'video');
+  if (!video || video.codec_name !== 'h264') throw new Error('Expected Chromium compatible H.264: '+file);
+  fs.copyFileSync(input,path.join(target,file));
+  execFileSync('ffmpeg',['-y','-v','error','-ss','1','-i',input,'-frames:v','1','-vf','scale=480:-2',path.join(target,name+'.jpg')]);
+  return {id:name,name:'动态背景 '+(i+1),file,poster:name+'.jpg',bytes:fs.statSync(input).size,sha256:crypto.createHash('sha256').update(fs.readFileSync(input)).digest('hex'),codec:video.codec_name,width:video.width,height:video.height,duration:Number(probe.format.duration)};
+});
+fs.writeFileSync(path.join(target,'manifest.json'),JSON.stringify({version:1,source:'User supplied original videos; source filenames preserved.',items},null,2)+'\n');
+console.log(JSON.stringify(items,null,2));
