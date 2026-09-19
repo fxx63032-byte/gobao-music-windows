@@ -5,6 +5,8 @@ const crypto = require('crypto');
 const { spawn } = require('child_process');
 const { pathToFileURL } = require('url');
 
+app.setName('GO宝音乐');
+
 protocol.registerSchemesAsPrivileged([{
   scheme: 'gobao-audio',
   privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true }
@@ -85,6 +87,8 @@ function createWindow() {
     minWidth: 1100,
     minHeight: 700,
     backgroundColor: '#05040a',
+    title: 'GO宝音乐',
+    icon: path.join(__dirname, 'build', 'icon.ico'),
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -111,7 +115,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle('music:choose', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: '导入本地音乐',
+      title: 'GO宝音乐 · 导入本地音乐',
       properties: ['openFile'],
       filters: [
         { name: '音乐文件', extensions: ['mp3','wav','flac','m4a','aac','ogg','opus','wma','webm','mp4','ape','ac3','aiff'] },
