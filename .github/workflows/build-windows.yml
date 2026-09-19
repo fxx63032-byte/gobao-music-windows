@@ -1,4 +1,4 @@
-name: Build GoBao Music Windows V0.2
+name: Build GO宝音乐 Windows V0.2
 
 on:
   workflow_dispatch:
@@ -37,8 +37,8 @@ jobs:
       - name: Verify unpacked executable exists
         shell: powershell
         run: |
-          $exe = Get-ChildItem -Path dist -Recurse -Filter 'Go宝音乐.exe' | Select-Object -First 1
-          if (-not $exe) { throw 'Unpacked Go宝音乐.exe not found' }
+          $exe = Get-ChildItem -Path dist -Recurse -Filter 'GO宝音乐.exe' | Select-Object -First 1
+          if (-not $exe) { throw 'Unpacked GO宝音乐.exe not found' }
           Write-Host "Found $($exe.FullName)"
 
       - name: Build installer and portable EXE
@@ -47,7 +47,7 @@ jobs:
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: GoBaoMusic-Windows-V0.2
+          name: GOBaoMusic-Windows-V0.2
           path: |
             dist/*.exe
             dist/*.blockmap
