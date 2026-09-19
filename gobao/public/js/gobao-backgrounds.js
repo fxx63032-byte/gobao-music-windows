@@ -21,6 +21,12 @@ function gobaoNormalizeMedia(value) {
   });
   return item ? {type:'video', id:'gobao:'+item.id, src:gobaoBackgroundBase+item.file, name:item.name, mime:'video/mp4', size:item.bytes} : null;
 }
+function gobaoClearBackgroundForManualPreset() {
+  if (!gobaoNormalizeMedia(typeof customBackgroundActiveMedia === 'function' ? customBackgroundActiveMedia() : null)) return false;
+  if (typeof setCustomBackgroundMedia !== 'function') return false;
+  setCustomBackgroundMedia(null, true);
+  return true;
+}
 function gobaoDrawBackdropFrame() {
   var primary = document.getElementById('custom-bg-video');
   var canvas = gobaoBackdropCanvas;

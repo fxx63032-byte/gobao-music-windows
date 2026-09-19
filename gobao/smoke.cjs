@@ -156,13 +156,36 @@ app.whenReady().then(async()=>{
   await win.webContents.reload();
   await waitFor('typeof fx!=="undefined" && !!fx.backgroundMedia && !!document.getElementById("gobao-background-library")');
   assert.equal(await run('fx.backgroundMedia.id'),'gobao:9820fccb9dfa71a1236e39ad8bf2dac5');
+
+  await run('dismissSplash({instant:true});applyDiyMode(true,{save:false,toast:false,animate:false});toggleFxPanel(true);setFxPanelTab("home");setPreset(10)');
+  await new Promise(r=>setTimeout(r,700));
+  const presetHandoff=await run(`(()=>{
+    const canvas=document.getElementById('gobao-background-backdrop');
+    const source=document.getElementById('custom-bg-video');
+    return {
+      preset:fx.preset,
+      selected:!!document.querySelector('.preset-card[data-preset="10"].active'),
+      backgroundMedia:fx.backgroundMedia,
+      active:document.body.classList.contains('gobao-background-active'),
+      source:source.getAttribute('src'),
+      ready:canvas.dataset.frameReady,
+      count:canvas.dataset.frameCount,
+      columns:canvas.dataset.columns,
+      underlyingVisible:getComputedStyle(document.getElementById('canvas-container')).visibility!=='hidden'
+    };
+  })()`);
+  assert.deepEqual(presetHandoff,{preset:10,selected:true,backgroundMedia:null,active:false,source:null,ready:'false',count:'0',columns:'0',underlyingVisible:true});
+  fs.writeFileSync(path.join(evidence,'non-video-preset-restored.png'),(await win.webContents.capturePage()).toPNG());
+
+  await run('document.querySelector("#gobao-background-quick-grid [data-gobao-background]").click()');
+  await waitFor('document.body.classList.contains("gobao-background-active") && document.getElementById("gobao-background-backdrop").dataset.frameReady==="true"');
   await run('document.getElementById("gobao-library-clear").click()');
   assert.equal(await run('document.body.classList.contains("gobao-background-active")'),false);
   assert.equal(await run('document.getElementById("custom-bg-video").getAttribute("src")'),null);
   assert.deepEqual(await run('(()=>{const canvas=document.getElementById("gobao-background-backdrop");return {ready:canvas.dataset.frameReady,count:canvas.dataset.frameCount};})()'),{ready:'false',count:'0'});
   assert.notEqual(await run('getComputedStyle(document.getElementById("canvas-container")).visibility'),'hidden');
   assert.deepEqual(errors,[]);
-  const report={ok:true,transport:'http',platform:process.platform,electron:process.versions.electron,placement,visibleLibrary,login,results,mobileComposite,audio,systemReducedMotion,reducedMotion:true,persistence:true,clear:true};
+  const report={ok:true,transport:'http',platform:process.platform,electron:process.versions.electron,placement,visibleLibrary,login,results,mobileComposite,audio,systemReducedMotion,reducedMotion:true,persistence:true,presetHandoff,clear:true};
   fs.writeFileSync(path.join(evidence,'dynamic-library-smoke.json'),JSON.stringify(report,null,2));
   console.log(JSON.stringify(report));
   clearTimeout(timeout);app.exit(0);
