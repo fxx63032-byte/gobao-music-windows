@@ -1,4 +1,4 @@
-name: Build Mineradio Upstream
+name: Build GO宝音乐 Windows
 
 on:
   workflow_dispatch:
@@ -33,7 +33,7 @@ jobs:
           Write-Host "Mineradio upstream: $sha"
           if ($sha -ne "94025664d71a8e6cedbb8eca56309a10ca1e1562") { throw "Unexpected Mineradio commit: $sha" }
 
-      - name: Setup Node
+      - name: Apply GO宝音乐 branding\n        shell: powershell\n        run: .\\branding\\apply-gobao-branding.ps1\n\n      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -44,7 +44,7 @@ jobs:
         working-directory: Mineradio
         run: npm ci --no-audit --no-fund
 
-      - name: Build Mineradio Windows installer
+      - name: Build GO宝音乐 Windows installer
         working-directory: Mineradio
         env:
           GH_TOKEN: ${{ github.token }}
@@ -53,7 +53,7 @@ jobs:
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: Mineradio-2.2.0-Upstream
+          name: GOBaoMusic-2.2.0-Windows
           path: |
             Mineradio/dist/*Setup.exe
             Mineradio/dist/*.yml
