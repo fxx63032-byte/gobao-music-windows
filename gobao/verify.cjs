@@ -31,6 +31,8 @@ assert.ok(!html.includes('<span class="login-easter-eyes compact"'));
 const gobaoRuntime = fs.readFileSync(path.join(publicRoot,'js/gobao-backgrounds.js'),'utf8');
 assert.ok(gobaoRuntime.includes('gobaoSetBackdropMedia'));
 assert.ok(gobaoRuntime.includes('gobao-background-backdrop'));
+assert.ok(gobaoRuntime.includes('requestVideoFrameCallback'));
+assert.ok(gobaoRuntime.includes('drawImage(primary'));
 const gobaoStyles = fs.readFileSync(path.join(publicRoot,'css/gobao-backgrounds.css'),'utf8');
 assert.ok(gobaoStyles.includes('body.gobao-background-active #canvas-container'));
 assert.ok(gobaoStyles.includes('#gobao-background-backdrop'));

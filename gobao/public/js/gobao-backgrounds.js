@@ -3,8 +3,10 @@ var gobaoBackgroundBase = 'assets/gobao/dynamic-backgrounds/';
 var gobaoLibraryDialog;
 var gobaoLibraryStatus;
 var gobaoAudioGlow = 0;
-var gobaoBackdropVideo;
-var gobaoBackdropSyncTimer;
+var gobaoBackdropCanvas;
+var gobaoBackdropFrameHandle = 0;
+var gobaoBackdropFrameMode = '';
+var gobaoBackdropSource = '';
 function gobaoDisableAutomaticLoginPrompts() { return true; }
 function gobaoPrepareLoginModal(modal) {
   if (!modal) return;
@@ -19,66 +21,88 @@ function gobaoNormalizeMedia(value) {
   });
   return item ? {type:'video', id:'gobao:'+item.id, src:gobaoBackgroundBase+item.file, name:item.name, mime:'video/mp4', size:item.bytes} : null;
 }
-function gobaoBackdropMatchesPrimary(primary, backdrop) {
-  return !!(primary && backdrop && primary.getAttribute('src') && primary.getAttribute('src') === backdrop.getAttribute('src'));
-}
-function gobaoSyncBackdropPlayback(force) {
+function gobaoDrawBackdropFrame() {
   var primary = document.getElementById('custom-bg-video');
-  var backdrop = gobaoBackdropVideo;
-  if (!gobaoBackdropMatchesPrimary(primary, backdrop)) return;
-  backdrop.playbackRate = primary.playbackRate || 1;
-  if (primary.readyState >= 1 && (force || Math.abs((backdrop.currentTime || 0) - (primary.currentTime || 0)) > 0.12)) {
-    try { backdrop.currentTime = primary.currentTime || 0; } catch (_) { }
-  }
-  if (primary.paused) backdrop.pause();
-  else {
-    var play = backdrop.play();
-    if (play && play.catch) play.catch(function () { });
+  var canvas = gobaoBackdropCanvas;
+  if (!primary || !canvas || primary.readyState < 2 || !primary.videoWidth || !primary.videoHeight) return;
+  var width = 360;
+  var height = Math.max(1, Math.round(width * primary.videoHeight / primary.videoWidth));
+  if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
+  var context = canvas.getContext('2d', {alpha:false});
+  if (!context) return;
+  context.drawImage(primary,0,0,width,height);
+  canvas.dataset.frameReady = 'true';
+  canvas.dataset.frameCount = String((Number(canvas.dataset.frameCount) || 0) + 1);
+}
+function gobaoQueueBackdropFrame() {
+  if (gobaoBackdropFrameHandle || !document.body.classList.contains('gobao-background-active')) return;
+  var primary = document.getElementById('custom-bg-video');
+  if (!primary) return;
+  if (typeof primary.requestVideoFrameCallback === 'function') {
+    gobaoBackdropFrameMode = 'video';
+    gobaoBackdropFrameHandle = primary.requestVideoFrameCallback(function () {
+      gobaoBackdropFrameHandle = 0;
+      gobaoDrawBackdropFrame();
+      gobaoQueueBackdropFrame();
+    });
+  } else {
+    gobaoBackdropFrameMode = 'animation';
+    gobaoBackdropFrameHandle = requestAnimationFrame(function () {
+      gobaoBackdropFrameHandle = 0;
+      gobaoDrawBackdropFrame();
+      gobaoQueueBackdropFrame();
+    });
   }
 }
-function gobaoEnsureBackdropVideo() {
-  if (gobaoBackdropVideo && gobaoBackdropVideo.isConnected) return gobaoBackdropVideo;
+function gobaoStopBackdropFrames() {
+  var primary = document.getElementById('custom-bg-video');
+  if (gobaoBackdropFrameHandle) {
+    if (gobaoBackdropFrameMode === 'video' && primary && typeof primary.cancelVideoFrameCallback === 'function') primary.cancelVideoFrameCallback(gobaoBackdropFrameHandle);
+    else cancelAnimationFrame(gobaoBackdropFrameHandle);
+  }
+  gobaoBackdropFrameHandle = 0;
+  gobaoBackdropFrameMode = '';
+  if (gobaoBackdropCanvas) {
+    var context = gobaoBackdropCanvas.getContext('2d');
+    if (context) context.clearRect(0,0,gobaoBackdropCanvas.width,gobaoBackdropCanvas.height);
+    gobaoBackdropCanvas.dataset.frameReady = 'false';
+    gobaoBackdropCanvas.dataset.frameCount = '0';
+  }
+}
+function gobaoEnsureBackdropCanvas() {
+  if (gobaoBackdropCanvas && gobaoBackdropCanvas.isConnected) return gobaoBackdropCanvas;
   var primary = document.getElementById('custom-bg-video');
   var layer = document.getElementById('custom-bg');
   if (!primary || !layer) return null;
-  var backdrop = document.createElement('video');
-  backdrop.id = 'gobao-background-backdrop';
-  backdrop.muted = true;
-  backdrop.loop = true;
-  backdrop.playsInline = true;
-  backdrop.preload = 'metadata';
-  backdrop.setAttribute('aria-hidden','true');
-  layer.insertBefore(backdrop, primary);
-  gobaoBackdropVideo = backdrop;
-  ['loadedmetadata','playing','seeked','ratechange'].forEach(function (eventName) {
-    primary.addEventListener(eventName,function () { gobaoSyncBackdropPlayback(true); });
+  var canvas = document.createElement('canvas');
+  canvas.id = 'gobao-background-backdrop';
+  canvas.width = 360;
+  canvas.height = 640;
+  canvas.dataset.frameReady = 'false';
+  canvas.dataset.frameCount = '0';
+  canvas.setAttribute('aria-hidden','true');
+  layer.insertBefore(canvas, primary);
+  gobaoBackdropCanvas = canvas;
+  ['loadeddata','playing','seeked','timeupdate'].forEach(function (eventName) {
+    primary.addEventListener(eventName,function () { gobaoDrawBackdropFrame(); gobaoQueueBackdropFrame(); });
   });
-  primary.addEventListener('timeupdate',function () { gobaoSyncBackdropPlayback(false); });
-  primary.addEventListener('pause',function () { if (gobaoBackdropVideo) gobaoBackdropVideo.pause(); });
-  return backdrop;
+  return canvas;
 }
 function gobaoSetBackdropMedia(bundled) {
-  var backdrop = gobaoEnsureBackdropVideo();
+  var backdrop = gobaoEnsureBackdropCanvas();
   if (!backdrop) return;
   if (!bundled) {
-    if (gobaoBackdropSyncTimer) clearInterval(gobaoBackdropSyncTimer);
-    gobaoBackdropSyncTimer = null;
-    backdrop.pause();
-    backdrop.removeAttribute('src');
-    backdrop.load();
+    gobaoStopBackdropFrames();
+    gobaoBackdropSource = '';
     return;
   }
-  if (backdrop.getAttribute('src') !== bundled.src) {
-    backdrop.setAttribute('src', bundled.src);
-    backdrop.load();
+  if (gobaoBackdropSource !== bundled.src) {
+    gobaoStopBackdropFrames();
+    gobaoBackdropSource = bundled.src;
+    return;
   }
-  backdrop.muted = true;
-  backdrop.loop = true;
-  if (!gobaoBackdropSyncTimer) {
-    gobaoBackdropSyncTimer = setInterval(function () { gobaoSyncBackdropPlayback(false); }, 120);
-  }
-  var play = backdrop.play();
-  if (play && play.catch) play.catch(function () { });
+  gobaoDrawBackdropFrame();
+  gobaoQueueBackdropFrame();
 }
 function gobaoSyncBackground(media) {
   var bundled = gobaoNormalizeMedia(media);
