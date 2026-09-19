@@ -13,7 +13,38 @@ if (!(Test-Path $brandIcon)) { throw "GO宝音乐 icon not found: $brandIcon" }
 
 Write-Host 'Applying GO宝音乐 branding to pinned Mineradio source...'
 
-Copy-Item $brandIcon $targetIcon -Force
+Add-Type -AssemblyName System.Drawing
+$srcImage = [System.Drawing.Image]::FromFile($brandIcon)
+try {
+  $bitmap = New-Object System.Drawing.Bitmap 512, 512
+  try {
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    try {
+      $graphics.Clear([System.Drawing.Color]::Transparent)
+      $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+      $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+      $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+      $graphics.DrawImage($srcImage, 0, 0, 512, 512)
+    } finally {
+      $graphics.Dispose()
+    }
+    $bitmap.Save($targetIcon, [System.Drawing.Imaging.ImageFormat]::Png)
+  } finally {
+    $bitmap.Dispose()
+  }
+} finally {
+  $srcImage.Dispose()
+}
+
+$iconCheck = [System.Drawing.Image]::FromFile($targetIcon)
+try {
+  if ($iconCheck.Width -lt 256 -or $iconCheck.Height -lt 256) {
+    throw "GO宝音乐 icon resize failed: $($iconCheck.Width)x$($iconCheck.Height)"
+  }
+  Write-Host "GO宝音乐 build icon: $($iconCheck.Width)x$($iconCheck.Height)"
+} finally {
+  $iconCheck.Dispose()
+}
 
 $pkg = Get-Content -Raw -Encoding UTF8 $packagePath | ConvertFrom-Json
 $pkg.productName = 'GO宝音乐'
