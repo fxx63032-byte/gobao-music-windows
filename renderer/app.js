@@ -43,8 +43,8 @@
       const result=await window.goBaoDesktop.chooseMusic();
       if(!result||result.canceled){status.textContent='已取消导入。';return;}
       if(!result.ok){
-        if(result.errorCode==='FFMPEG_NOT_BUNDLED') status.textContent='播放器组件未完整安装，请重新安装 Go宝音乐。';
-        else if(result.errorCode==='PROTECTED_FORMAT') status.textContent='这首歌是其他音乐平台的受保护下载文件。Go宝音乐不会破解它；接入正版曲库后会自动匹配可播放版本。';
+        if(result.errorCode==='FFMPEG_NOT_BUNDLED') status.textContent='播放器组件未完整安装，请重新安装 GO宝音乐。';
+        else if(result.errorCode==='PROTECTED_FORMAT') status.textContent='这首歌是其他音乐平台的受保护下载文件。GO宝音乐不会破解它；接入正版曲库后会自动匹配可播放版本。';
         else status.textContent='这首音乐暂时无法播放。你可以直接换一首，不需要处理格式。';
         return;
       }
