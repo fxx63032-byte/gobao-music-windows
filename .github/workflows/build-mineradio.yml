@@ -13,7 +13,7 @@ on:
       - "branding/**"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-windows:
@@ -64,3 +64,32 @@ jobs:
             Mineradio/dist/*.yml
           if-no-files-found: error
           compression-level: 0
+
+
+      - name: Generate installer checksum
+        working-directory: Mineradio
+        shell: powershell
+        run: |
+          $exe = Get-ChildItem -Path dist -Filter "GOBaoMusic-*-Setup.exe" | Select-Object -First 1
+          if (-not $exe) { throw "GO宝音乐 Setup.exe not found" }
+          $hash = (Get-FileHash $exe.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($exe.Name)" | Set-Content -Encoding ascii dist\SHA256SUMS.txt
+          Write-Host "Installer: $($exe.FullName)"
+          Write-Host "SHA256: $hash"
+
+      - name: Publish direct EXE release
+        working-directory: Mineradio
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "gobao-windows-v0.2.0"
+          $exe = Get-ChildItem -Path dist -Filter "GOBaoMusic-*-Setup.exe" | Select-Object -First 1
+          if (-not $exe) { throw "GO宝音乐 Setup.exe not found" }
+
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --target "$env:GITHUB_SHA" --title "GO宝音乐 Windows V0.2" --notes "GO宝音乐 Windows 安装版。可直接下载 EXE，无需解压 GitHub Actions Artifact。"
+          }
+
+          gh release upload $tag $exe.FullName "dist\SHA256SUMS.txt" --clobber
