@@ -10,6 +10,7 @@ on:
       - ".gitmodules"
       - "Mineradio"
       - ".github/workflows/build-mineradio.yml"
+      - "branding/**"
 
 permissions:
   contents: read
@@ -33,7 +34,11 @@ jobs:
           Write-Host "Mineradio upstream: $sha"
           if ($sha -ne "94025664d71a8e6cedbb8eca56309a10ca1e1562") { throw "Unexpected Mineradio commit: $sha" }
 
-      - name: Apply GO宝音乐 branding\n        shell: powershell\n        run: .\\branding\\apply-gobao-branding.ps1\n\n      - name: Setup Node
+      - name: Apply GO宝音乐 branding
+        shell: powershell
+        run: .\branding\apply-gobao-branding.ps1
+
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
