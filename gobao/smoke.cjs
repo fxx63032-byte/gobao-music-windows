@@ -80,9 +80,10 @@ app.whenReady().then(async()=>{
   const visibleLibrary=await run(`(()=>{
     const panel=document.getElementById('fx-panel');
     const cards=Array.from(document.querySelectorAll('#gobao-background-quick-grid [data-gobao-background]'));
-    return {panel:panel.classList.contains('show')||panel.classList.contains('peek'),cards:cards.filter(card=>card.getBoundingClientRect().height>0&&getComputedStyle(card).display!=='none').length};
+    const previews=Array.from(document.querySelectorAll('#gobao-background-quick-grid .gobao-background-preview'));
+    return {panel:panel.classList.contains('show')||panel.classList.contains('peek'),cards:cards.filter(card=>card.getBoundingClientRect().height>0&&getComputedStyle(card).display!=='none').length,landscapePreviews:previews.filter(preview=>preview.getBoundingClientRect().width/Math.max(1,preview.getBoundingClientRect().height)>1.7).length};
   })()`);
-  assert.deepEqual(visibleLibrary,{panel:true,cards:4});
+  assert.deepEqual(visibleLibrary,{panel:true,cards:4,landscapePreviews:4});
   fs.writeFileSync(path.join(evidence,'dynamic-backgrounds-in-diy.png'),(await win.webContents.capturePage()).toPNG());
 
   await run('document.getElementById("gobao-library-open").click()');
@@ -95,26 +96,38 @@ app.whenReady().then(async()=>{
     const result=await run(`(async()=>{
       document.querySelectorAll('#gobao-background-quick-grid [data-gobao-background]')[${i}].click();
       const video=document.getElementById('custom-bg-video');
+      const backdrop=document.getElementById('gobao-background-backdrop');
       const start=performance.now();
       while(performance.now()-start<12000) {
         if(video.error)throw new Error('Video decode failed: '+video.error.code);
-        if(video.readyState>=2 && video.currentTime>0.1 && !video.paused)break;
+        if(backdrop&&backdrop.error)throw new Error('Backdrop decode failed: '+backdrop.error.code);
+        if(video.readyState>=2 && video.currentTime>0.1 && !video.paused&&backdrop&&backdrop.readyState>=2&&!backdrop.paused)break;
         await new Promise(r=>setTimeout(r,80));
       }
-      if(video.readyState<2 || video.paused || video.currentTime<=0.1)throw new Error('Video did not play');
+      if(video.readyState<2 || video.paused || video.currentTime<=0.1 || !backdrop || backdrop.readyState<2 || backdrop.paused)throw new Error('Landscape composite did not play');
       video.currentTime=Math.max(0,video.duration-0.15);
       await new Promise(r=>setTimeout(r,800));
+      const layer=document.getElementById('custom-bg').getBoundingClientRect();
+      const canvasStyle=getComputedStyle(document.getElementById('canvas-container'));
+      const backdropStyle=getComputedStyle(backdrop);
       return {
         index:${i},width:video.videoWidth,height:video.videoHeight,loop:video.loop,muted:video.muted,
         wrapped:video.currentTime<3,fit:getComputedStyle(video).objectFit,
+        portraitSource:video.videoHeight>video.videoWidth,stageLandscape:layer.width>layer.height,
+        backdropWidth:backdrop.videoWidth,backdropHeight:backdrop.videoHeight,backdropFit:backdropStyle.objectFit,
+        backdropBlur:backdropStyle.filter.includes('blur'),syncDelta:Math.abs(video.currentTime-backdrop.currentTime),
+        underlyingHidden:canvasStyle.visibility==='hidden'&&Number(canvasStyle.opacity)===0,
         quickSelected:document.querySelectorAll('#gobao-background-quick-grid [aria-pressed="true"]').length,
         librarySelected:document.querySelectorAll('#gobao-background-library [aria-pressed="true"]').length
       };
     })()`);
     assert.equal(result.width,1080);assert.equal(result.height,1920);
     assert.equal(result.loop,true);assert.equal(result.muted,true);assert.equal(result.wrapped,true);assert.equal(result.fit,'contain');
+    assert.equal(result.portraitSource,true);assert.equal(result.stageLandscape,true);assert.equal(result.backdropWidth,1080);assert.equal(result.backdropHeight,1920);
+    assert.equal(result.backdropFit,'cover');assert.equal(result.backdropBlur,true);assert.ok(result.syncDelta<0.2);assert.equal(result.underlyingHidden,true);
     assert.equal(result.quickSelected,1);assert.equal(result.librarySelected,1);
     results.push(result);
+    if(i===0) fs.writeFileSync(path.join(evidence,'landscape-portrait-composite.png'),(await win.webContents.capturePage()).toPNG());
   }
   assert.equal(await run('fx.backgroundMedia.id'),'gobao:af957e69081e83aa8714f18270241ea4');
 
@@ -134,6 +147,8 @@ app.whenReady().then(async()=>{
   await run('document.getElementById("gobao-library-clear").click()');
   assert.equal(await run('document.body.classList.contains("gobao-background-active")'),false);
   assert.equal(await run('document.getElementById("custom-bg-video").getAttribute("src")'),null);
+  assert.equal(await run('document.getElementById("gobao-background-backdrop").getAttribute("src")'),null);
+  assert.notEqual(await run('getComputedStyle(document.getElementById("canvas-container")).visibility'),'hidden');
   assert.deepEqual(errors,[]);
   const report={ok:true,transport:'http',platform:process.platform,electron:process.versions.electron,placement,visibleLibrary,login,results,audio,systemReducedMotion,reducedMotion:true,persistence:true,clear:true};
   fs.writeFileSync(path.join(evidence,'dynamic-library-smoke.json'),JSON.stringify(report,null,2));
