@@ -39,8 +39,15 @@ app.whenReady().then(async()=>{
   }
   await run(`document.querySelectorAll('[data-gobao-background]').forEach(b=>b.click())`);
   assert.equal(await run('fx.backgroundMedia.id'),'gobao:af957e69081e83aa8714f18270241ea4');
+  const systemReducedMotion=await run('window.matchMedia("(prefers-reduced-motion: reduce)").matches');
+  win.webContents.debugger.attach('1.3');
+  await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', {features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
   const audio=await run(`(()=>{window.requestAnimationFrame=()=>0;gobaoAudioGlow=0;gobaoUpdateBackgroundAudio({energy:1,beat:1},true);const active=gobaoAudioGlow;for(let i=0;i<100;i++)gobaoUpdateBackgroundAudio({energy:1,beat:1},false);return {active,paused:gobaoAudioGlow};})()`);
   assert.ok(audio.active>0);assert.ok(audio.paused<0.0001);
+  await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', {features:[{name:'prefers-reduced-motion',value:'reduce'}]});
+  const reduced=await run('(()=>{gobaoAudioGlow=0;gobaoUpdateBackgroundAudio({energy:1,beat:1},true);return gobaoAudioGlow;})()');
+  assert.equal(reduced,0);
+  await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', {features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
   const evidence=path.resolve(__dirname,'../verification');fs.mkdirSync(evidence,{recursive:true});
   fs.writeFileSync(path.join(evidence,'dynamic-library.png'),(await win.webContents.capturePage()).toPNG());
   await win.webContents.reload();
@@ -51,7 +58,7 @@ app.whenReady().then(async()=>{
   assert.equal(await run('document.body.classList.contains("gobao-background-active")'),false);
   assert.equal(await run('document.getElementById("custom-bg-video").getAttribute("src")'),null);
   assert.deepEqual(errors,[]);
-  const report={ok:true,platform:process.platform,electron:process.versions.electron,results,audio,persistence:true,clear:true};
+  const report={ok:true,platform:process.platform,electron:process.versions.electron,results,audio,systemReducedMotion,reducedMotion:true,persistence:true,clear:true};
   fs.writeFileSync(path.join(evidence,'dynamic-library-smoke.json'),JSON.stringify(report,null,2));
   console.log(JSON.stringify(report));clearTimeout(timeout);app.exit(0);
 }).catch(e=>{console.error(e.stack);clearTimeout(timeout);app.exit(1);});
