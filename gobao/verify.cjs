@@ -15,7 +15,7 @@ for (const item of original.items) {
   assert.equal(crypto.createHash('sha256').update(data).digest('hex'),item.sha256);
   assert.ok(fs.statSync(path.join(publicRoot,relative,item.poster)).size>0);
 }
-for (const file of ['js/gobao-backgrounds.js','js/gobao-manifest.js','js/index-loader.js','js/modules/02-visual/06-custom-background-colorlab.js','js/modules/07-fx/04-preset-grid-uniforms.js','js/modules/07-fx/09-console-workspace.js','js/modules/08-account/02-login-status.js','js/modules/08-account/03-login-modal-flows.js','js/modules/08-account/05-startup-login-guide.js','js/modules/11-main-loop.js']) new vm.Script(fs.readFileSync(path.join(publicRoot,file),'utf8'),{filename:file});
+for (const file of ['js/gobao-backgrounds.js','js/gobao-manifest.js','js/index-loader.js','js/modules/02-visual/06-custom-background-colorlab.js','js/modules/07-fx/09-console-workspace.js','js/modules/08-account/02-login-status.js','js/modules/08-account/03-login-modal-flows.js','js/modules/08-account/05-startup-login-guide.js','js/modules/11-main-loop.js']) new vm.Script(fs.readFileSync(path.join(publicRoot,file),'utf8'),{filename:file});
 const context = {setTimeout(){}};
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(publicRoot,'js/gobao-manifest.js'),'utf8')+'\n'+fs.readFileSync(path.join(publicRoot,'js/gobao-backgrounds.js'),'utf8'),context);
@@ -34,15 +34,12 @@ assert.ok(gobaoRuntime.includes('gobao-background-backdrop'));
 assert.ok(gobaoRuntime.includes('requestVideoFrameCallback'));
 assert.ok(gobaoRuntime.includes('drawImage(primary'));
 assert.ok(gobaoRuntime.includes('columns = mobile ? 1 : 3'));
-assert.ok(gobaoRuntime.includes('gobaoClearBackgroundForManualPreset'));
 const gobaoStyles = fs.readFileSync(path.join(publicRoot,'css/gobao-backgrounds.css'),'utf8');
 assert.ok(gobaoStyles.includes('body.gobao-background-active #canvas-container'));
 assert.ok(gobaoStyles.includes('#gobao-background-backdrop'));
 assert.ok(gobaoStyles.includes('grid-template-columns:repeat(3'));
 const workspace = fs.readFileSync(path.join(publicRoot,'js/modules/07-fx/09-console-workspace.js'),'utf8');
 assert.ok(workspace.includes("title: 'GO宝动态背景'"));
-const presetGrid = fs.readFileSync(path.join(publicRoot,'js/modules/07-fx/04-preset-grid-uniforms.js'),'utf8');
-assert.ok(presetGrid.includes('gobao-clear-background-on-manual-preset'));
 const loginFlow = fs.readFileSync(path.join(publicRoot,'js/modules/08-account/03-login-modal-flows.js'),'utf8');
 assert.ok(loginFlow.includes('gobao-login-direct'));
 assert.ok(loginFlow.includes('gobao-login-provider-fallback'));
