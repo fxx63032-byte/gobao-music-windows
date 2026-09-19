@@ -102,7 +102,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "gobao-windows-v0.2.0"
+          $tag = "gobao-windows-v0.2.0-" + $env:GITHUB_SHA.Substring(0, 7)
           $exe = Get-ChildItem -Path dist -Filter "GOBaoMusic-*-Setup.exe" | Select-Object -First 1
           if (-not $exe) { throw "GO宝音乐 Setup.exe not found" }
 

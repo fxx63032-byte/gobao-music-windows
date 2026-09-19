@@ -19,3 +19,5 @@ patch('public/index.html', 'css/gobao-backgrounds.css', '</head>', '  <link rel=
 patch('public/index.html', 'gobao-library-open', '      <div class="lyric-color-row image-pick-row bg-media-row">', '      <div class="lyric-color-row"><div class="fx-color-row-label">GO宝音乐动态素材库<small>四款内置动态背景</small></div><button type="button" class="fx-mini-btn" id="gobao-library-open">打开素材库</button></div>\n      <div class="lyric-color-row image-pick-row bg-media-row">');
 patch('public/js/modules/07-fx/02-accent-background-controls.js', 'gobaoSyncBackground(media)', '  var hasVideo = !!(media && media.type === \'video\');', '  var hasVideo = !!(media && media.type === \'video\');\n  gobaoSyncBackground(media);');
 console.log('GO宝 dynamic library applied to pinned Mineradio.');
+
+patch('server.js', "'.mp4': 'video/mp4'", 'const MIME = {', "const MIME = {\n  '.mp4': 'video/mp4',");

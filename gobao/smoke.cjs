@@ -10,7 +10,15 @@ app.whenReady().then(async()=>{
   const win = new BrowserWindow({show:false,width:1280,height:800,webPreferences:{nodeIntegration:false,contextIsolation:true,backgroundThrottling:false,offscreen:true}});
   const errors=[];
   win.webContents.on('console-message',(_e,details)=>{if (/SyntaxError|ReferenceError/.test(details.message)) errors.push(details.message);});
-  await win.loadFile(path.resolve(__dirname,'../Mineradio/public/index.html'));
+  process.env.PORT='0';
+  process.env.HOST='127.0.0.1';
+  const server=require('../Mineradio/server.js');
+  if(!server.listening) await new Promise(resolve=>server.once('listening',resolve));
+  const origin='http://127.0.0.1:'+server.address().port;
+  const probe=await fetch(origin+'/assets/gobao/dynamic-backgrounds/9932a0694a6812706edf2ca73f2f08b1.mp4');
+  assert.equal(probe.headers.get('content-type'),'video/mp4');
+  await probe.body.cancel();
+  await win.loadURL(origin);
   const run=code=>win.webContents.executeJavaScript(code,true);
   for(let i=0;i<100;i++) { if(await run('!!document.getElementById("gobao-background-library")'))break; await new Promise(r=>setTimeout(r,100)); }
   assert.equal(await run('typeof gobaoSelectBackground'), 'function');
@@ -58,7 +66,7 @@ app.whenReady().then(async()=>{
   assert.equal(await run('document.body.classList.contains("gobao-background-active")'),false);
   assert.equal(await run('document.getElementById("custom-bg-video").getAttribute("src")'),null);
   assert.deepEqual(errors,[]);
-  const report={ok:true,platform:process.platform,electron:process.versions.electron,results,audio,systemReducedMotion,reducedMotion:true,persistence:true,clear:true};
+  const report={ok:true,transport:"http",platform:process.platform,electron:process.versions.electron,results,audio,systemReducedMotion,reducedMotion:true,persistence:true,clear:true};
   fs.writeFileSync(path.join(evidence,'dynamic-library-smoke.json'),JSON.stringify(report,null,2));
   console.log(JSON.stringify(report));clearTimeout(timeout);app.exit(0);
 }).catch(e=>{console.error(e.stack);clearTimeout(timeout);app.exit(1);});
