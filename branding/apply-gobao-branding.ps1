@@ -48,7 +48,8 @@ if (-not $pkg.mineradio.PSObject.Properties['appUserModelId']) {
   $pkg.mineradio.appUserModelId = 'com.gobao.music'
 }
 
-$pkg | ConvertTo-Json -Depth 32 | Set-Content -Encoding UTF8 $packagePath
+$pkgJson = $pkg | ConvertTo-Json -Depth 32
+[System.IO.File]::WriteAllText($packagePath, $pkgJson + [Environment]::NewLine, (New-Object System.Text.UTF8Encoding($false)))
 
 $html = Get-Content -Raw -Encoding UTF8 $indexPath
 $html = $html.Replace('<title>Mineradio</title>', '<title>GO宝音乐</title>')
@@ -61,7 +62,7 @@ $splashPattern = '(?s)<div class="splash-wordmark" id="splash-wordmark" aria-lab
 $splashReplacement = '<div class="splash-wordmark" id="splash-wordmark" aria-label="GO宝音乐"><span class="splash-word-mine">GO宝</span><span class="splash-word-radio">音乐</span></div>' + [Environment]::NewLine + '        <div class="splash-signal-line">'
 $html = [regex]::Replace($html, $splashPattern, $splashReplacement)
 
-Set-Content -Encoding UTF8 $indexPath $html
+[System.IO.File]::WriteAllText($indexPath, $html, (New-Object System.Text.UTF8Encoding($false)))
 
 Write-Host 'GO宝音乐 branding applied.'
 Write-Host 'Upstream GPL/NOTICE files are intentionally preserved.'
