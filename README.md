@@ -1,4 +1,4 @@
-# Go宝音乐 / Mineradio 2.2.0 直接集成版
+# GO宝音乐 / Mineradio 2.2.0 品牌适配版
 
 本仓库已按产品决策停止维护原先自研播放器前端与 3D 视觉实现，主程序改为直接使用 **Mineradio 2.2.0**。
 
@@ -41,7 +41,7 @@ GitHub Actions 工作流会：
 本版本直接使用 Mineradio GPL-3.0 源码，因此分发该版本时必须遵守 GPL-3.0 的对应源码、许可证和修改说明要求。
 
 Mineradio README 还明确说明：**Mineradio 名称、MR Logo、界面视觉设计与原创视觉表达归作者所有。**
-因此当前直接集成版保留上游名称/品牌/NOTICE，不擅自把其原创品牌视觉改名成 Go宝。
+因此当前构建保留 GPL、NOTICE 与上游来源说明；应用运行时名称、快捷方式、安装包名称和应用图标替换为 GO宝音乐自有品牌资产。Mineradio 上游代码来源不会被隐藏。
 
 如果后续希望：
 - 改成“Go宝音乐”品牌；
@@ -54,3 +54,16 @@ Mineradio README 还明确说明：**Mineradio 名称、MR Logo、界面视觉�
 ## 音乐平台说明
 
 Mineradio 内含网易云、QQ 音乐等用户自有账号辅助能力，但上游明确说明这些不是官方 B2B 曲库授权。Go宝如果正式商业上线，在线曲库仍应另外签约 TME Music Cloud、Tuned Global 或其他合法版权 Provider。
+
+## GO宝音乐品牌补丁
+
+构建时运行 `branding/apply-gobao-branding.ps1`：
+
+- 应用运行名：GO宝音乐
+- Windows 快捷方式：GO宝音乐
+- 自有紫黑宇宙环应用图标
+- 启动画面文字替换为 GO宝音乐
+- 不复用 Mineradio 安装器品牌图片
+- 保留 `LICENSE`、`NOTICE.md` 和上游源码来源
+
+汽水音乐登录功能仍来自 Mineradio 的 Qishui Passport bridge，本次品牌修改不删除该 Provider。
