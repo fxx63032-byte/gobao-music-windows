@@ -27,6 +27,17 @@ patch('public/js/modules/08-account/03-login-modal-flows.js', 'gobao-login-direc
 patch('public/js/modules/08-account/03-login-modal-flows.js', 'gobao-login-provider-fallback', "  loginProvider = opts.provider ? normalizeLoginProviderKey(opts.provider) : 'netease';", "  loginProvider = opts.provider ? normalizeLoginProviderKey(opts.provider) : 'netease';\n  // gobao-login-provider-fallback: 汽水登录入口不进入 GO宝正式界面，保留其曲库 Provider 实现。\n  if (loginProvider === 'qishui') loginProvider = 'netease';");
 patch('public/js/modules/08-account/02-login-status.js', 'gobao-logged-out-account-icon', "    btn.classList.add('logged-out', 'login-eye-avatar');\n    btn.title = '登录账号';\n    btn.innerHTML = typeof loginEasterEggEyeMarkup === 'function'\n      ? loginEasterEggEyeMarkup(true)\n      : '<span class=\"login-word\">登录</span>';", "    // gobao-logged-out-account-icon: 使用普通账号图标，不再把大小眼彩蛋放回顶部按钮。\n    btn.classList.add('logged-out');\n    btn.title = '登录账号';\n    btn.innerHTML = '<svg class=\"gobao-account-icon\" width=\"19\" height=\"19\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"3.5\"/><path d=\"M5 20c.7-4 3.1-6 7-6s6.3 2 7 6\"/></svg>';");
 patch('public/js/modules/08-account/05-startup-login-guide.js', 'gobaoDisableAutomaticLoginPrompts()', 'function maybeRunStartupLoginGuide(source) {', 'function maybeRunStartupLoginGuide(source) {\n  if (typeof gobaoDisableAutomaticLoginPrompts === \'function\' && gobaoDisableAutomaticLoginPrompts()) return false;');
+
+patch('server.js', 'gobao-qq-login-no-easter-egg-backend',
+  "  '/api/qq/login/cookie',\n  '/api/kugou/login/cookie',",
+  "  // gobao-qq-login-no-easter-egg-backend: QQ 官方窗口取得的会话保存不再依赖旧彩蛋状态。\n  '/api/kugou/login/cookie',");
+patch('desktop/main.js', 'gobao-qq-login-no-easter-egg-ipc',
+  "ipcMain.handle('qq-music-open-login', async (event, options) => {\n  if (!loginEasterEggGate.isUnlocked()) return loginEasterEggLockedResult();\n  return openQQMusicLoginWindow(getSenderWindow(event), options || {});\n});",
+  "ipcMain.handle('qq-music-open-login', async (event, options) => {\n  // gobao-qq-login-no-easter-egg-ipc: QQ 登录使用 GO宝内置官方窗口，不再受旧彩蛋门禁影响。\n  if (!isTrustedMainWindowIpc(event)) return { ok: false, error: 'UNTRUSTED_SENDER' };\n  return openQQMusicLoginWindow(getSenderWindow(event), options || {});\n});");
+patch('public/js/modules/08-account/03-login-modal-flows.js', 'GO宝音乐弹出的 QQ 音乐官方网页登录窗口',
+  "    ? '打开 <b>QQ 音乐官方网页登录窗口</b> 扫码，成功后会自动同步账号会话。'",
+  "    ? '打开 <b>GO宝音乐弹出的 QQ 音乐官方网页登录窗口</b> 扫码，成功后会自动同步账号会话；不会读取你另外打开的 QQ音乐 Windows 客户端。'");
+
 console.log('GO宝 dynamic library applied to pinned Mineradio.');
 
 patch('server.js', "'.mp4': 'video/mp4'", 'const MIME = {', "const MIME = {\n  '.mp4': 'video/mp4',");
