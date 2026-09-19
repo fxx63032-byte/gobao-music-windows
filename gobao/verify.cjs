@@ -8,7 +8,7 @@ const publicRoot = path.resolve(root,process.argv[2] || 'Mineradio/public');
 const relative = 'assets/gobao/dynamic-backgrounds';
 const original = JSON.parse(fs.readFileSync(path.join(__dirname,'public',relative,'manifest.json')));
 assert.deepEqual(JSON.parse(fs.readFileSync(path.join(publicRoot,relative,'manifest.json'))),original);
-assert.equal(original.items.length,4);
+assert.equal(original.items.length,6);
 for (const item of original.items) {
   const data = fs.readFileSync(path.join(publicRoot,relative,item.file));
   assert.equal(data.length,item.bytes);
@@ -48,4 +48,4 @@ assert.ok(loginStatus.includes('gobao-logged-out-account-icon'));
 assert.ok(!loginStatus.includes('loginEasterEggEyeMarkup(true)'));
 const startupGuide = fs.readFileSync(path.join(publicRoot,'js/modules/08-account/05-startup-login-guide.js'),'utf8');
 assert.ok(startupGuide.includes('gobaoDisableAutomaticLoginPrompts()'));
-console.log('PASS: four MP4 hashes, landscape composite, isolated visual layer, syntax, UI and local path allowlist: '+publicRoot);
+console.log('PASS: six MP4 hashes, responsive composite, isolated visual layer, syntax, UI and local path allowlist: '+publicRoot);

@@ -30,7 +30,7 @@ app.whenReady().then(async()=>{
     throw new Error('Timed out waiting for: '+code);
   };
 
-  await waitFor('!!document.getElementById("gobao-background-library") && document.querySelectorAll("#gobao-background-quick-grid [data-gobao-background]").length===4');
+  await waitFor('!!document.getElementById("gobao-background-library") && document.querySelectorAll("#gobao-background-quick-grid [data-gobao-background]").length===6');
   assert.equal(await run('typeof gobaoSelectBackground'),'function');
   await run('dismissSplash({instant:true})');
 
@@ -44,7 +44,7 @@ app.whenReady().then(async()=>{
       firstGroup:!!(group&&group.parentElement&&group.parentElement.firstElementChild===group)
     };
   })()`);
-  assert.deepEqual(placement,{cards:4,commonPage:true,groupOpen:true,firstGroup:true});
+  assert.deepEqual(placement,{cards:6,commonPage:true,groupOpen:true,firstGroup:true});
 
   assert.equal(await run('gobaoDisableAutomaticLoginPrompts()'),true);
   assert.equal(await run('maybeRunStartupLoginGuide("qa")'),false);
@@ -83,16 +83,16 @@ app.whenReady().then(async()=>{
     const previews=Array.from(document.querySelectorAll('#gobao-background-quick-grid .gobao-background-preview'));
     return {panel:panel.classList.contains('show')||panel.classList.contains('peek'),cards:cards.filter(card=>card.getBoundingClientRect().height>0&&getComputedStyle(card).display!=='none').length,landscapePreviews:previews.filter(preview=>preview.getBoundingClientRect().width/Math.max(1,preview.getBoundingClientRect().height)>1.7).length};
   })()`);
-  assert.deepEqual(visibleLibrary,{panel:true,cards:4,landscapePreviews:4});
+  assert.deepEqual(visibleLibrary,{panel:true,cards:6,landscapePreviews:6});
   fs.writeFileSync(path.join(evidence,'dynamic-backgrounds-in-diy.png'),(await win.webContents.capturePage()).toPNG());
 
   await run('document.getElementById("gobao-library-open").click()');
   assert.equal(await run('gobaoLibraryDialog.open'),true);
-  assert.equal(await run('document.querySelectorAll("#gobao-background-library [data-gobao-background]").length'),4);
+  assert.equal(await run('document.querySelectorAll("#gobao-background-library [data-gobao-background]").length'),6);
   await run('gobaoLibraryDialog.close()');
 
   const results=[];
-  for(let i=0;i<4;i++) {
+  for(let i=0;i<6;i++) {
     const result=await run(`(async()=>{
       document.querySelectorAll('#gobao-background-quick-grid [data-gobao-background]')[${i}].click();
       const video=document.getElementById('custom-bg-video');
@@ -133,7 +133,7 @@ app.whenReady().then(async()=>{
     results.push(result);
     if(i===0) fs.writeFileSync(path.join(evidence,'landscape-portrait-composite.png'),(await win.webContents.capturePage()).toPNG());
   }
-  assert.equal(await run('fx.backgroundMedia.id'),'gobao:af957e69081e83aa8714f18270241ea4');
+  assert.equal(await run('fx.backgroundMedia.id'),'gobao:9820fccb9dfa71a1236e39ad8bf2dac5');
 
   win.setSize(390,844);
   await new Promise(r=>setTimeout(r,500));
@@ -155,7 +155,7 @@ app.whenReady().then(async()=>{
 
   await win.webContents.reload();
   await waitFor('typeof fx!=="undefined" && !!fx.backgroundMedia && !!document.getElementById("gobao-background-library")');
-  assert.equal(await run('fx.backgroundMedia.id'),'gobao:af957e69081e83aa8714f18270241ea4');
+  assert.equal(await run('fx.backgroundMedia.id'),'gobao:9820fccb9dfa71a1236e39ad8bf2dac5');
   await run('document.getElementById("gobao-library-clear").click()');
   assert.equal(await run('document.body.classList.contains("gobao-background-active")'),false);
   assert.equal(await run('document.getElementById("custom-bg-video").getAttribute("src")'),null);

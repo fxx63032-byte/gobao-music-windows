@@ -2,9 +2,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const {execFileSync} = require('node:child_process');
-const names = ['9932a0694a6812706edf2ca73f2f08b1','54b153b2200de017af3b74c160988617','0e921f2d102de93dd7c5933d3b31c056','af957e69081e83aa8714f18270241ea4'];
+const names = ['9932a0694a6812706edf2ca73f2f08b1','54b153b2200de017af3b74c160988617','0e921f2d102de93dd7c5933d3b31c056','af957e69081e83aa8714f18270241ea4','f31fffea7da046bdefbc96873436d931','9820fccb9dfa71a1236e39ad8bf2dac5'];
 const source = process.argv[2];
-if (!source) throw new Error('Provide the directory containing the four original MP4 files');
+if (!source) throw new Error('Provide the directory containing the six original MP4 files');
 const target = path.join(__dirname, 'public/assets/gobao/dynamic-backgrounds');
 fs.mkdirSync(target, {recursive:true});
 const items = names.map((name, i) => {
