@@ -115,9 +115,10 @@ app.whenReady().then(async()=>{
       return {
         index:${i},width:video.videoWidth,height:video.videoHeight,loop:video.loop,muted:video.muted,
         wrapped:video.currentTime<3,fit:getComputedStyle(video).objectFit,
-        portraitSource:video.videoHeight>video.videoWidth,stageLandscape:layer.width>layer.height,
+        portraitSource:video.videoHeight>video.videoWidth,stageLandscape:layer.width>layer.height,columns:Number(backdrop.dataset.columns),
         backdropWidth:backdrop.width,backdropHeight:backdrop.height,backdropFit:backdropStyle.objectFit,
         backdropBlur:backdropStyle.filter.includes('blur'),backdropFrames:finalFrameCount,frameAdvanced:finalFrameCount>initialFrameCount,
+        decoderHidden:Number(getComputedStyle(video).opacity)===0,
         singleDecoder:document.querySelectorAll('#custom-bg video[src]').length===1,
         underlyingHidden:canvasStyle.visibility==='hidden'&&Number(canvasStyle.opacity)===0,
         quickSelected:document.querySelectorAll('#gobao-background-quick-grid [aria-pressed="true"]').length,
@@ -126,13 +127,21 @@ app.whenReady().then(async()=>{
     })()`);
     assert.equal(result.width,1080);assert.equal(result.height,1920);
     assert.equal(result.loop,true);assert.equal(result.muted,true);assert.equal(result.wrapped,true);assert.equal(result.fit,'contain');
-    assert.equal(result.portraitSource,true);assert.equal(result.stageLandscape,true);assert.equal(result.backdropWidth,360);assert.equal(result.backdropHeight,640);
-    assert.equal(result.backdropFit,'cover');assert.equal(result.backdropBlur,true);assert.ok(result.backdropFrames>0);assert.equal(result.frameAdvanced,true);assert.equal(result.singleDecoder,true);assert.equal(result.underlyingHidden,true);
+    assert.equal(result.portraitSource,true);assert.equal(result.stageLandscape,true);assert.equal(result.columns,3);assert.equal(result.backdropWidth,960);assert.ok(result.backdropHeight>0);
+    assert.equal(result.backdropFit,'cover');assert.equal(result.backdropBlur,false);assert.ok(result.backdropFrames>0);assert.equal(result.frameAdvanced,true);assert.equal(result.decoderHidden,true);assert.equal(result.singleDecoder,true);assert.equal(result.underlyingHidden,true);
     assert.equal(result.quickSelected,1);assert.equal(result.librarySelected,1);
     results.push(result);
     if(i===0) fs.writeFileSync(path.join(evidence,'landscape-portrait-composite.png'),(await win.webContents.capturePage()).toPNG());
   }
   assert.equal(await run('fx.backgroundMedia.id'),'gobao:af957e69081e83aa8714f18270241ea4');
+
+  win.setSize(390,844);
+  await new Promise(r=>setTimeout(r,500));
+  const mobileComposite=await run('(()=>{gobaoDrawBackdropFrame();const canvas=document.getElementById("gobao-background-backdrop");return {columns:Number(canvas.dataset.columns),portrait:innerHeight>innerWidth};})()');
+  assert.deepEqual(mobileComposite,{columns:1,portrait:true});
+  fs.writeFileSync(path.join(evidence,'mobile-single-background.png'),(await win.webContents.capturePage()).toPNG());
+  win.setSize(1280,800);
+  await new Promise(r=>setTimeout(r,500));
 
   const systemReducedMotion=await run('window.matchMedia("(prefers-reduced-motion: reduce)").matches');
   win.webContents.debugger.attach('1.3');
@@ -153,7 +162,7 @@ app.whenReady().then(async()=>{
   assert.deepEqual(await run('(()=>{const canvas=document.getElementById("gobao-background-backdrop");return {ready:canvas.dataset.frameReady,count:canvas.dataset.frameCount};})()'),{ready:'false',count:'0'});
   assert.notEqual(await run('getComputedStyle(document.getElementById("canvas-container")).visibility'),'hidden');
   assert.deepEqual(errors,[]);
-  const report={ok:true,transport:'http',platform:process.platform,electron:process.versions.electron,placement,visibleLibrary,login,results,audio,systemReducedMotion,reducedMotion:true,persistence:true,clear:true};
+  const report={ok:true,transport:'http',platform:process.platform,electron:process.versions.electron,placement,visibleLibrary,login,results,mobileComposite,audio,systemReducedMotion,reducedMotion:true,persistence:true,clear:true};
   fs.writeFileSync(path.join(evidence,'dynamic-library-smoke.json'),JSON.stringify(report,null,2));
   console.log(JSON.stringify(report));
   clearTimeout(timeout);app.exit(0);

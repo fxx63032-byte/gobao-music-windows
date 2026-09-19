@@ -25,12 +25,36 @@ function gobaoDrawBackdropFrame() {
   var primary = document.getElementById('custom-bg-video');
   var canvas = gobaoBackdropCanvas;
   if (!primary || !canvas || primary.readyState < 2 || !primary.videoWidth || !primary.videoHeight) return;
-  var width = 360;
-  var height = Math.max(1, Math.round(width * primary.videoHeight / primary.videoWidth));
+  var layer = document.getElementById('custom-bg');
+  var layerWidth = layer ? layer.clientWidth : window.innerWidth;
+  var layerHeight = layer ? layer.clientHeight : window.innerHeight;
+  var mobile = window.matchMedia('(max-width:700px)').matches;
+  var width = mobile ? 480 : 960;
+  var height = Math.max(1, Math.round(width * layerHeight / Math.max(1,layerWidth)));
   if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
   var context = canvas.getContext('2d', {alpha:false});
   if (!context) return;
-  context.drawImage(primary,0,0,width,height);
+  var columns = mobile ? 1 : 3;
+  var cellWidth = width / columns;
+  var sourceRatio = primary.videoWidth / primary.videoHeight;
+  var cellRatio = cellWidth / height;
+  var sourceX = 0;
+  var sourceY = 0;
+  var sourceWidth = primary.videoWidth;
+  var sourceHeight = primary.videoHeight;
+  if (sourceRatio > cellRatio) {
+    sourceWidth = primary.videoHeight * cellRatio;
+    sourceX = (primary.videoWidth - sourceWidth) / 2;
+  } else {
+    sourceHeight = primary.videoWidth / cellRatio;
+    sourceY = (primary.videoHeight - sourceHeight) / 2;
+  }
+  context.fillStyle = '#08050e';
+  context.fillRect(0,0,width,height);
+  for (var column=0; column<columns; column++) {
+    context.drawImage(primary,sourceX,sourceY,sourceWidth,sourceHeight,column*cellWidth,0,cellWidth,height);
+  }
+  canvas.dataset.columns = String(columns);
   canvas.dataset.frameReady = 'true';
   canvas.dataset.frameCount = String((Number(canvas.dataset.frameCount) || 0) + 1);
 }
@@ -67,6 +91,7 @@ function gobaoStopBackdropFrames() {
     if (context) context.clearRect(0,0,gobaoBackdropCanvas.width,gobaoBackdropCanvas.height);
     gobaoBackdropCanvas.dataset.frameReady = 'false';
     gobaoBackdropCanvas.dataset.frameCount = '0';
+    gobaoBackdropCanvas.dataset.columns = '0';
   }
 }
 function gobaoEnsureBackdropCanvas() {
@@ -80,6 +105,7 @@ function gobaoEnsureBackdropCanvas() {
   canvas.height = 640;
   canvas.dataset.frameReady = 'false';
   canvas.dataset.frameCount = '0';
+  canvas.dataset.columns = '0';
   canvas.setAttribute('aria-hidden','true');
   layer.insertBefore(canvas, primary);
   gobaoBackdropCanvas = canvas;
@@ -147,12 +173,14 @@ function gobaoMakeBackgroundCard(item, compact) {
   var preview = document.createElement('span');
   preview.className = 'gobao-background-preview';
   preview.style.setProperty('--gobao-poster','url("' + gobaoBackgroundBase + item.poster + '")');
-  var image = document.createElement('img');
-  image.src = gobaoBackgroundBase + item.poster;
-  image.alt = '';
-  image.width = 480;
-  image.height = 854;
-  preview.appendChild(image);
+  for (var tile=0; tile<3; tile++) {
+    var image = document.createElement('img');
+    image.src = gobaoBackgroundBase + item.poster;
+    image.alt = '';
+    image.width = 160;
+    image.height = 284;
+    preview.appendChild(image);
+  }
   button.appendChild(preview);
   var copy = document.createElement('span');
   copy.className = 'gobao-background-card-copy';
@@ -172,7 +200,7 @@ function gobaoInitLibrary() {
   var dialog = gobaoLibraryDialog = document.createElement('dialog');
   dialog.id = 'gobao-background-library';
   dialog.setAttribute('aria-labelledby','gobao-library-title');
-  dialog.innerHTML = '<header><h2 id="gobao-library-title">动态素材库</h2><button type="button" id="gobao-library-close" aria-label="关闭素材库">关闭</button></header><p>横屏舞台 · 竖版主体完整保留 · 点击立即切换</p><div class="gobao-background-grid"></div><p id="gobao-library-status" role="status" aria-live="polite">播放音乐时，外围光晕随节奏变化。</p><button type="button" id="gobao-library-clear">恢复默认背景</button>';
+  dialog.innerHTML = '<header><h2 id="gobao-library-title">动态素材库</h2><button type="button" id="gobao-library-close" aria-label="关闭素材库">关闭</button></header><p>桌面三联满屏 · 手机单画面 · 点击立即切换</p><div class="gobao-background-grid"></div><p id="gobao-library-status" role="status" aria-live="polite">播放音乐时，外围光晕随节奏变化。</p><button type="button" id="gobao-library-clear">恢复默认背景</button>';
   document.body.appendChild(dialog);
   gobaoLibraryStatus = document.getElementById('gobao-library-status');
   var grid = dialog.querySelector('.gobao-background-grid');
@@ -186,7 +214,7 @@ function gobaoInitLibrary() {
   document.getElementById('gobao-library-clear').addEventListener('click',function () { clearCustomBackgroundImage(); gobaoLibraryStatus.textContent='已恢复默认背景'; });
   var video = document.getElementById('custom-bg-video');
   video.addEventListener('playing',function () {
-    if (gobaoNormalizeMedia(customBackgroundActiveMedia())) gobaoLibraryStatus.textContent='横屏背景已切换，竖版主体正在静音循环播放。';
+    if (gobaoNormalizeMedia(customBackgroundActiveMedia())) gobaoLibraryStatus.textContent='桌面三联满屏已切换；手机端自动显示单画面。';
   });
   video.addEventListener('error',function () {
     if (!gobaoNormalizeMedia(customBackgroundActiveMedia())) return;

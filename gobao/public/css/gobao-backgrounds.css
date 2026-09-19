@@ -7,9 +7,9 @@
 #gobao-background-library button:focus-visible { outline:3px solid #dfc1ff; outline-offset:3px; }
 .gobao-background-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
 #gobao-background-library .gobao-background-grid button { padding:6px; overflow:hidden; }
-.gobao-background-preview { position:relative; display:block; width:100%; aspect-ratio:16/9; overflow:hidden; border-radius:7px; background:#08050e; isolation:isolate; }
+.gobao-background-preview { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); width:100%; aspect-ratio:16/9; overflow:hidden; border-radius:7px; background:#08050e; isolation:isolate; }
 .gobao-background-preview::before { content:''; position:absolute; inset:-12px; z-index:-1; background-image:var(--gobao-poster); background-size:cover; background-position:center; filter:blur(9px) brightness(.5) saturate(1.15); transform:scale(1.12); }
-.gobao-background-card img { position:relative; width:100%; height:100%; object-fit:contain; object-position:center; display:block; }
+.gobao-background-card img { position:relative; width:100%; height:100%; min-width:0; object-fit:cover; object-position:center; display:block; }
 .gobao-background-card-copy { display:block; padding:10px 2px; }
 .gobao-background-card b,.gobao-background-card small { display:block; }
 .gobao-background-card small { margin-top:3px; color:#c8b9df; font-size:11px; }
@@ -26,10 +26,10 @@
 #login-easter-egg-gate { display:none !important; }
 #login-provider-qishui,#user-provider-qishui,#account-add-qishui { display:none !important; }
 body.gobao-background-active #custom-bg { z-index:0; opacity:1 !important; visibility:visible !important; background:#08050e; }
-#gobao-background-backdrop { position:absolute; inset:-5%; z-index:0; width:110%; height:110%; object-fit:cover; object-position:center; opacity:0; filter:blur(30px) brightness(.42) saturate(1.18); transform:scale(1.08); pointer-events:none; background:#08050e; transition:opacity .35s ease; }
-body.gobao-background-active #gobao-background-backdrop { opacity:.92; }
-body.gobao-background-active #custom-bg-video { z-index:1; object-fit:contain; object-position:center; transform:none; inset:0; width:100%; height:100%; filter:drop-shadow(0 0 36px rgba(5,2,12,.72)); }
-body.gobao-background-active #custom-bg::after { z-index:2; opacity:1; background:linear-gradient(90deg,rgba(5,2,12,.34),transparent 27%,transparent 73%,rgba(5,2,12,.34)),linear-gradient(0deg,#08050eb8,transparent 25%,transparent 75%,#08050e6e); }
+#gobao-background-backdrop { position:absolute; inset:0; z-index:1; width:100%; height:100%; object-fit:cover; object-position:center; opacity:0; pointer-events:none; background:#08050e; transition:opacity .25s ease; }
+body.gobao-background-active #gobao-background-backdrop { opacity:1; }
+body.gobao-background-active #custom-bg-video { z-index:0; object-fit:contain; object-position:center; transform:none; inset:0; width:100%; height:100%; opacity:0 !important; pointer-events:none; }
+body.gobao-background-active #custom-bg::after { z-index:2; opacity:1; background:linear-gradient(0deg,#08050e9c,transparent 22%,transparent 78%,#08050e52); }
 #gobao-background-halo { position:absolute; inset:0; z-index:3; pointer-events:none; opacity:0; background:radial-gradient(ellipse at center,transparent 40%,#945dff 150%); }
 body.gobao-background-active #gobao-background-halo { opacity:var(--gobao-audio-glow,0); }
 body.gobao-background-active #canvas-container,
@@ -39,5 +39,5 @@ body.gobao-background-active #album-bg-next,
 body.gobao-background-active #sonic-workshop-layer,
 body.gobao-background-active #wallpaper-engine-layer,
 body.gobao-background-active #wallpaper-engine-glass-sampler { opacity:0 !important; visibility:hidden !important; pointer-events:none !important; }
-@media(max-width:600px) { .gobao-background-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .gobao-background-quick-grid { grid-template-columns:1fr; } }
+@media(max-width:700px) { .gobao-background-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .gobao-background-quick-grid { grid-template-columns:1fr; } .gobao-background-preview { grid-template-columns:1fr; } .gobao-background-preview img:nth-child(n+2) { display:none; } }
 @media(prefers-reduced-motion:reduce) { .gobao-background-quick-grid .gobao-background-card { transition:none; } }
