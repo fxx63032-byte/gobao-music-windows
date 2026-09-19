@@ -105,6 +105,8 @@ app.whenReady().then(async()=>{
         await new Promise(r=>setTimeout(r,80));
       }
       if(video.readyState<2 || video.paused || video.currentTime<=0.1 || !backdrop || backdrop.readyState<2 || backdrop.paused)throw new Error('Landscape composite did not play');
+      await new Promise(r=>setTimeout(r,400));
+      const steadySyncDelta=Math.abs(video.currentTime-backdrop.currentTime);
       video.currentTime=Math.max(0,video.duration-0.15);
       await new Promise(r=>setTimeout(r,800));
       const layer=document.getElementById('custom-bg').getBoundingClientRect();
@@ -115,7 +117,7 @@ app.whenReady().then(async()=>{
         wrapped:video.currentTime<3,fit:getComputedStyle(video).objectFit,
         portraitSource:video.videoHeight>video.videoWidth,stageLandscape:layer.width>layer.height,
         backdropWidth:backdrop.videoWidth,backdropHeight:backdrop.videoHeight,backdropFit:backdropStyle.objectFit,
-        backdropBlur:backdropStyle.filter.includes('blur'),syncDelta:Math.abs(video.currentTime-backdrop.currentTime),
+        backdropBlur:backdropStyle.filter.includes('blur'),syncDelta:steadySyncDelta,backdropWrapped:backdrop.currentTime<3,
         underlyingHidden:canvasStyle.visibility==='hidden'&&Number(canvasStyle.opacity)===0,
         quickSelected:document.querySelectorAll('#gobao-background-quick-grid [aria-pressed="true"]').length,
         librarySelected:document.querySelectorAll('#gobao-background-library [aria-pressed="true"]').length
@@ -124,7 +126,7 @@ app.whenReady().then(async()=>{
     assert.equal(result.width,1080);assert.equal(result.height,1920);
     assert.equal(result.loop,true);assert.equal(result.muted,true);assert.equal(result.wrapped,true);assert.equal(result.fit,'contain');
     assert.equal(result.portraitSource,true);assert.equal(result.stageLandscape,true);assert.equal(result.backdropWidth,1080);assert.equal(result.backdropHeight,1920);
-    assert.equal(result.backdropFit,'cover');assert.equal(result.backdropBlur,true);assert.ok(result.syncDelta<0.2);assert.equal(result.underlyingHidden,true);
+    assert.equal(result.backdropFit,'cover');assert.equal(result.backdropBlur,true);assert.ok(result.syncDelta<0.2,'Backdrop sync failed: '+JSON.stringify(result));assert.equal(result.backdropWrapped,true);assert.equal(result.underlyingHidden,true);
     assert.equal(result.quickSelected,1);assert.equal(result.librarySelected,1);
     results.push(result);
     if(i===0) fs.writeFileSync(path.join(evidence,'landscape-portrait-composite.png'),(await win.webContents.capturePage()).toPNG());

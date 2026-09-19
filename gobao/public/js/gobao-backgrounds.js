@@ -4,6 +4,7 @@ var gobaoLibraryDialog;
 var gobaoLibraryStatus;
 var gobaoAudioGlow = 0;
 var gobaoBackdropVideo;
+var gobaoBackdropSyncTimer;
 function gobaoDisableAutomaticLoginPrompts() { return true; }
 function gobaoPrepareLoginModal(modal) {
   if (!modal) return;
@@ -60,6 +61,8 @@ function gobaoSetBackdropMedia(bundled) {
   var backdrop = gobaoEnsureBackdropVideo();
   if (!backdrop) return;
   if (!bundled) {
+    if (gobaoBackdropSyncTimer) clearInterval(gobaoBackdropSyncTimer);
+    gobaoBackdropSyncTimer = null;
     backdrop.pause();
     backdrop.removeAttribute('src');
     backdrop.load();
@@ -71,6 +74,9 @@ function gobaoSetBackdropMedia(bundled) {
   }
   backdrop.muted = true;
   backdrop.loop = true;
+  if (!gobaoBackdropSyncTimer) {
+    gobaoBackdropSyncTimer = setInterval(function () { gobaoSyncBackdropPlayback(false); }, 120);
+  }
   var play = backdrop.play();
   if (play && play.catch) play.catch(function () { });
 }
