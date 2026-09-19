@@ -35,7 +35,9 @@ async function main() {
 
   const qqIpcStart = desktopSource.indexOf("ipcMain.handle('qq-music-open-login'");
   assert.ok(qqIpcStart >= 0, 'QQ login IPC missing');
-  const qqIpc = desktopSource.slice(qqIpcStart, qqIpcStart + 700);
+  const qqIpcEnd = desktopSource.indexOf("ipcMain.handle('qq-music-clear-login'", qqIpcStart);
+  assert.ok(qqIpcEnd > qqIpcStart, 'QQ login IPC end marker missing');
+  const qqIpc = desktopSource.slice(qqIpcStart, qqIpcEnd);
   assert.ok(qqIpc.includes('gobao-qq-login-no-easter-egg-ipc'));
   assert.ok(!qqIpc.includes('loginEasterEggGate.isUnlocked()'), 'QQ login IPC must not check the legacy easter-egg gate');
   assert.ok(qqIpc.includes('isTrustedMainWindowIpc(event)'), 'QQ login IPC must keep trusted-renderer validation');
