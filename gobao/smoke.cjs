@@ -120,7 +120,7 @@ app.whenReady().then(async()=>{
         backdropBlur:backdropStyle.filter.includes('blur'),backdropFrames:finalFrameCount,frameAdvanced:finalFrameCount>initialFrameCount,
         decoderHidden:Number(getComputedStyle(video).opacity)===0,
         singleDecoder:document.querySelectorAll('#custom-bg video[src]').length===1,
-        underlyingHidden:canvasStyle.visibility==='hidden'&&Number(canvasStyle.opacity)===0,
+        visualCanvasVisible:canvasStyle.visibility!=='hidden'&&Number(canvasStyle.opacity)>0,
         quickSelected:document.querySelectorAll('#gobao-background-quick-grid [aria-pressed="true"]').length,
         librarySelected:document.querySelectorAll('#gobao-background-library [aria-pressed="true"]').length
       };
@@ -128,7 +128,7 @@ app.whenReady().then(async()=>{
     assert.equal(result.width,1080);assert.equal(result.height,1920);
     assert.equal(result.loop,true);assert.equal(result.muted,true);assert.equal(result.wrapped,true);assert.equal(result.fit,'contain');
     assert.equal(result.portraitSource,true);assert.equal(result.stageLandscape,true);assert.equal(result.columns,3);assert.equal(result.backdropWidth,960);assert.ok(result.backdropHeight>0);
-    assert.equal(result.backdropFit,'cover');assert.equal(result.backdropBlur,false);assert.ok(result.backdropFrames>0);assert.equal(result.frameAdvanced,true);assert.equal(result.decoderHidden,true);assert.equal(result.singleDecoder,true);assert.equal(result.underlyingHidden,true);
+    assert.equal(result.backdropFit,'cover');assert.equal(result.backdropBlur,false);assert.ok(result.backdropFrames>0);assert.equal(result.frameAdvanced,true);assert.equal(result.decoderHidden,true);assert.equal(result.singleDecoder,true);assert.equal(result.visualCanvasVisible,true);
     assert.equal(result.quickSelected,1);assert.equal(result.librarySelected,1);
     results.push(result);
     if(i===0) fs.writeFileSync(path.join(evidence,'landscape-portrait-composite.png'),(await win.webContents.capturePage()).toPNG());
