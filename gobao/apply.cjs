@@ -37,6 +37,15 @@ patch('public/js/modules/08-account/03-login-modal-flows.js', 'GO宝音乐弹出
   "    ? '打开 <b>QQ 音乐官方网页登录窗口</b> 扫码，成功后会自动同步账号会话。'",
   "    ? '打开 <b>GO宝音乐弹出的 QQ 音乐官方网页登录窗口</b> 扫码，成功后会自动同步账号会话；不会读取你另外打开的 QQ音乐 Windows 客户端。'");
 
+
+patch('public/js/modules/05-playback/11-provider-fallback.js', 'gobao-restricted-no-auto-queue-scan',
+  'var SOURCE_FALLBACK_MAX_QUEUE_ADVANCES = 2;',
+  '// gobao-restricted-no-auto-queue-scan: 受限歌曲只尝试当前歌曲的可用替代音源，不再自动扫描/推进整条队列。\\nvar SOURCE_FALLBACK_MAX_QUEUE_ADVANCES = 0;');
+
+patch('public/js/modules/05-playback/14-player-controls.js', 'gobao-restricted-manual-retry-cooldown',
+  "    if ((!audio || !audio.src) && playQueue.length && currentIdx >= 0) {\\n      await playQueueAt(currentIdx, { manual: true });\\n      return;\\n    }",
+  "    if ((!audio || !audio.src) && playQueue.length && currentIdx >= 0) {\\n      // gobao-restricted-manual-retry-cooldown: 终止态后短时间内点击播放不再立刻触发整套换源链。\\n      if (typeof isQueueItemRecentlyPlaybackFailed === 'function' && isQueueItemRecentlyPlaybackFailed(currentIdx)) {\\n        if (typeof showSourceFallbackNotice === 'function') showSourceFallbackNotice('当前歌曲暂不可播放', '已停止自动重试，避免反复换源导致卡顿。请选择其他歌曲，或稍后再试。');\\n        return;\\n      }\\n      await playQueueAt(currentIdx, { manual: true });\\n      return;\\n    }");
+
 console.log('GO宝 dynamic library applied to pinned Mineradio.');
 
 patch('server.js', "'.mp4': 'video/mp4'", 'const MIME = {', "const MIME = {\n  '.mp4': 'video/mp4',");
