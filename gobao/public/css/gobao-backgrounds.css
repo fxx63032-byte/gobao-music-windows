@@ -32,7 +32,7 @@ body.gobao-background-active #custom-bg-video { z-index:0; object-fit:contain; o
 body.gobao-background-active #custom-bg::after { z-index:2; opacity:1; background:linear-gradient(0deg,#08050e9c,transparent 22%,transparent 78%,#08050e52); }
 #gobao-background-halo { position:absolute; inset:0; z-index:3; pointer-events:none; opacity:0; background:radial-gradient(ellipse at center,transparent 40%,#945dff 150%); }
 body.gobao-background-active #gobao-background-halo { opacity:var(--gobao-audio-glow,0); }
-body.gobao-background-active #canvas-container,
+body.gobao-background-active #canvas-container { opacity:1 !important; visibility:visible !important; }
 body.gobao-background-active #idle-guide-canvas,
 body.gobao-background-active #album-bg,
 body.gobao-background-active #album-bg-next,
