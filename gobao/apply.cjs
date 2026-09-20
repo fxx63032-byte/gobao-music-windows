@@ -40,11 +40,23 @@ patch('public/js/modules/08-account/03-login-modal-flows.js', 'GO宝音乐弹出
 
 patch('public/js/modules/05-playback/11-provider-fallback.js', 'gobao-restricted-no-auto-queue-scan',
   'var SOURCE_FALLBACK_MAX_QUEUE_ADVANCES = 2;',
-  '// gobao-restricted-no-auto-queue-scan: 受限歌曲只尝试当前歌曲的可用替代音源，不再自动扫描/推进整条队列。\\nvar SOURCE_FALLBACK_MAX_QUEUE_ADVANCES = 0;');
+  `// gobao-restricted-no-auto-queue-scan: 受限歌曲只尝试当前歌曲的可用替代音源，不再自动扫描/推进整条队列。
+var SOURCE_FALLBACK_MAX_QUEUE_ADVANCES = 0;`);
 
 patch('public/js/modules/05-playback/14-player-controls.js', 'gobao-restricted-manual-retry-cooldown',
-  "    if ((!audio || !audio.src) && playQueue.length && currentIdx >= 0) {\\n      await playQueueAt(currentIdx, { manual: true });\\n      return;\\n    }",
-  "    if ((!audio || !audio.src) && playQueue.length && currentIdx >= 0) {\\n      // gobao-restricted-manual-retry-cooldown: 终止态后短时间内点击播放不再立刻触发整套换源链。\\n      if (typeof isQueueItemRecentlyPlaybackFailed === 'function' && isQueueItemRecentlyPlaybackFailed(currentIdx)) {\\n        if (typeof showSourceFallbackNotice === 'function') showSourceFallbackNotice('当前歌曲暂不可播放', '已停止自动重试，避免反复换源导致卡顿。请选择其他歌曲，或稍后再试。');\\n        return;\\n      }\\n      await playQueueAt(currentIdx, { manual: true });\\n      return;\\n    }");
+  `    if ((!audio || !audio.src) && playQueue.length && currentIdx >= 0) {
+      await playQueueAt(currentIdx, { manual: true });
+      return;
+    }`,
+  `    if ((!audio || !audio.src) && playQueue.length && currentIdx >= 0) {
+      // gobao-restricted-manual-retry-cooldown: 终止态后短时间内点击播放不再立刻触发整套换源链。
+      if (typeof isQueueItemRecentlyPlaybackFailed === 'function' && isQueueItemRecentlyPlaybackFailed(currentIdx)) {
+        if (typeof showSourceFallbackNotice === 'function') showSourceFallbackNotice('当前歌曲暂不可播放', '已停止自动重试，避免反复换源导致卡顿。请选择其他歌曲，或稍后再试。');
+        return;
+      }
+      await playQueueAt(currentIdx, { manual: true });
+      return;
+    }`);
 
 console.log('GO宝 dynamic library applied to pinned Mineradio.');
 
