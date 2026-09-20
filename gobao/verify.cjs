@@ -35,7 +35,7 @@ assert.ok(gobaoRuntime.includes('requestVideoFrameCallback'));
 assert.ok(gobaoRuntime.includes('drawImage(primary'));
 assert.ok(gobaoRuntime.includes('columns = mobile ? 1 : 3'));
 const gobaoStyles = fs.readFileSync(path.join(publicRoot,'css/gobao-backgrounds.css'),'utf8');
-assert.ok(gobaoStyles.includes('body.gobao-background-active #canvas-container'));
+assert.ok(gobaoStyles.includes('body.gobao-background-active #canvas-container { opacity:1 !important; visibility:visible !important; }'));
 assert.ok(gobaoStyles.includes('#gobao-background-backdrop'));
 assert.ok(gobaoStyles.includes('grid-template-columns:repeat(3'));
 const workspace = fs.readFileSync(path.join(publicRoot,'js/modules/07-fx/09-console-workspace.js'),'utf8');
@@ -49,3 +49,9 @@ assert.ok(!loginStatus.includes('loginEasterEggEyeMarkup(true)'));
 const startupGuide = fs.readFileSync(path.join(publicRoot,'js/modules/08-account/05-startup-login-guide.js'),'utf8');
 assert.ok(startupGuide.includes('gobaoDisableAutomaticLoginPrompts()'));
 console.log('PASS: six MP4 hashes, responsive composite, isolated visual layer, syntax, UI and local path allowlist: '+publicRoot);
+
+const fallbackSource = fs.readFileSync(path.resolve(root,'Mineradio/public/js/modules/05-playback/11-provider-fallback.js'),'utf8');
+assert.ok(fallbackSource.includes('gobao-restricted-no-auto-queue-scan'));
+assert.ok(fallbackSource.includes('var SOURCE_FALLBACK_MAX_QUEUE_ADVANCES = 0;'));
+const playerControls = fs.readFileSync(path.resolve(root,'Mineradio/public/js/modules/05-playback/14-player-controls.js'),'utf8');
+assert.ok(playerControls.includes('gobao-restricted-manual-retry-cooldown'));
