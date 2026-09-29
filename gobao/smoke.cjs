@@ -31,6 +31,12 @@ app.whenReady().then(async()=>{
   };
 
   await waitFor('!!document.getElementById("gobao-background-library") && document.querySelectorAll("#gobao-background-quick-grid [data-gobao-background]").length===6');
+  await waitFor('!!document.querySelector(".gobao-live-human-launch") && typeof gobaoLiveHuman === "object"');
+  await run('document.querySelector(".gobao-live-human-launch").click()');
+  assert.equal(await run('document.getElementById("gobao-live-human").classList.contains("show")'),true);
+  assert.equal(await run('!!document.querySelector(".gobao-live-human input[type=file]")'),true);
+  await run('gobaoLiveHuman.close()');
+  assert.equal(await run('document.getElementById("gobao-live-human").classList.contains("show")'),false);
   assert.equal(await run('typeof gobaoSelectBackground'),'function');
   await run('dismissSplash({instant:true})');
 
