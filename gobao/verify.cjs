@@ -15,7 +15,7 @@ for (const item of original.items) {
   assert.equal(crypto.createHash('sha256').update(data).digest('hex'),item.sha256);
   assert.ok(fs.statSync(path.join(publicRoot,relative,item.poster)).size>0);
 }
-for (const file of ['js/gobao-backgrounds.js','js/gobao-manifest.js','js/index-loader.js','js/modules/02-visual/06-custom-background-colorlab.js','js/modules/07-fx/09-console-workspace.js','js/modules/08-account/02-login-status.js','js/modules/08-account/03-login-modal-flows.js','js/modules/08-account/05-startup-login-guide.js','js/modules/11-main-loop.js']) new vm.Script(fs.readFileSync(path.join(publicRoot,file),'utf8'),{filename:file});
+for (const file of ['js/gobao-live-human.js','js/gobao-backgrounds.js','js/gobao-manifest.js','js/index-loader.js','js/modules/02-visual/06-custom-background-colorlab.js','js/modules/07-fx/09-console-workspace.js','js/modules/08-account/02-login-status.js','js/modules/08-account/03-login-modal-flows.js','js/modules/08-account/05-startup-login-guide.js','js/modules/11-main-loop.js']) new vm.Script(fs.readFileSync(path.join(publicRoot,file),'utf8'),{filename:file});
 const context = {setTimeout(){}};
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(publicRoot,'js/gobao-manifest.js'),'utf8')+'\n'+fs.readFileSync(path.join(publicRoot,'js/gobao-backgrounds.js'),'utf8'),context);
@@ -26,6 +26,9 @@ assert.equal(context.gobaoNormalizeMedia({type:'video',id:'gobao:'+item.id,src:'
 const html = fs.readFileSync(path.join(publicRoot,'index.html'),'utf8');
 assert.ok(html.includes('gobao-library-open'));
 assert.ok(html.includes('gobao-background-quick-grid'));
+assert.ok(html.includes('gobao-live-human.css'));
+assert.ok(fs.statSync(path.join(publicRoot,'css/gobao-live-human.css')).size>1000);
+assert.ok(fs.statSync(path.join(publicRoot,'js/gobao-live-human.js')).size>5000);
 assert.ok(html.includes('gobao-account-icon'));
 assert.ok(!html.includes('<span class="login-easter-eyes compact"'));
 const gobaoRuntime = fs.readFileSync(path.join(publicRoot,'js/gobao-backgrounds.js'),'utf8');
