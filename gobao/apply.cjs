@@ -12,7 +12,7 @@ function patch(file, marker, before, after) {
 fs.cpSync(path.join(__dirname, 'public'), path.join(app, 'public'), {recursive:true});
 const manifest = JSON.parse(fs.readFileSync(path.join(__dirname,'public/assets/gobao/dynamic-backgrounds/manifest.json')));
 fs.writeFileSync(path.join(app,'public/js/gobao-manifest.js'), 'var gobaoBackgroundManifest = '+JSON.stringify(manifest)+';\n');
-patch('public/js/index-loader.js', 'js/gobao-live-human.js', "    'js/modules/00-state/00-core-stores.js',", "    'js/gobao-live-human.js',\\n    'js/modules/00-state/00-core-stores.js',");
+patch('public/js/index-loader.js', 'js/gobao-live-human.js', "    'js/modules/00-state/00-core-stores.js',", "    'js/gobao-live-human.js',\n    'js/modules/00-state/00-core-stores.js',");
 patch('public/js/index-loader.js', 'js/gobao-backgrounds.js', "    'js/modules/00-state/00-core-stores.js',", "    'js/gobao-manifest.js',\n    'js/gobao-backgrounds.js',\n    'js/modules/00-state/00-core-stores.js',");
 patch('public/js/modules/02-visual/06-custom-background-colorlab.js', 'gobaoNormalizeMedia(value)', 'function normalizeCustomBackgroundMedia(value) {', 'function normalizeCustomBackgroundMedia(value) {\n  var bundled = gobaoNormalizeMedia(value);\n  if (bundled) return bundled;');
 patch('public/js/modules/11-main-loop.js', 'gobaoUpdateBackgroundAudio(', '  uniforms.uEnergy.value = audioEnergy;', '  uniforms.uEnergy.value = audioEnergy;\n  gobaoUpdateBackgroundAudio({bass:bass, mid:mid, treble:treble, beat:beatPulse, energy:audioEnergy}, playing);');
